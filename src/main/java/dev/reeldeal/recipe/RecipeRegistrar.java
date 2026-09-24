@@ -1,0 +1,110 @@
+package dev.reeldeal.recipe;
+
+import dev.reeldeal.item.FishingRodFactory;
+import dev.reeldeal.item.ItemRegistry;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.RecipeChoice;
+import org.bukkit.inventory.ShapedRecipe;
+import org.bukkit.plugin.Plugin;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Ports every {@code data/reel/recipe/*.json} file. The 15 line/hook combo
+ * files (identical pattern, only the two ingredients differ) collapse into
+ * one loop over {@link #LINES} x {@link #HOOKS} using
+ * {@link FishingRodFactory#construct} for the result, instead of 15
+ * hand-written recipes.
+ */
+public final class RecipeRegistrar {
+
+    private static final String[] ROD_PATTERN = {"  S", " SL", "S H"};
+    public static final List<String> LINES = List.of("woven_line", "reinforced_line", "fiber_line");
+    public static final List<String> HOOKS = List.of("wooden_hook", "iron_hook", "golden_hook", "cluster_hook", "anchor_hook");
+
+    private final Plugin plugin;
+    private final ItemRegistry items;
+    private final FishingRodFactory rods;
+
+    public RecipeRegistrar(Plugin plugin, ItemRegistry items, FishingRodFactory rods) {
+        this.plugin = plugin;
+        this.items = items;
+        this.rods = rods;
+    }
+
+    public void registerAll() {
+        // pack.mcmeta filters out minecraft:recipe/fishing_rod so the plain vanilla
+        // rod recipe can't bypass the line+hook system -- mirror that here.
+        Bukkit.removeRecipe(NamespacedKey.minecraft("fishing_rod"));
+
+        registerLineRecipes();
+        registerHookRecipes();
+        registerRodRecipes();
+    }
+
+    /** woven_line (string+stick) -> reinforced_line (+iron nuggets) -> fiber_line (+fiber x2). */
+    private void registerLineRecipes() {
+        addShaped("woven_line_h", items.create("woven_line"),
+                new String[]{"   ", "SIS", "   "},
+                Map.of('S', material(Material.STRING), 'I', material(Material.STICK)));
+        addShaped("woven_line_v", items.create("woven_line"),
+                new String[]{" S ", " I ", " S "},
+                Map.of('S', material(Material.STRING), 'I', material(Material.STICK)));
+
+        addShaped("reinforced_line", items.create("reinforced_line"),
+                new String[]{"NNN", "NLN", "NNN"},
+                Map.of('N', material(Material.IRON_NUGGET), 'L', exact("woven_line")));
+
+        addShaped("fiber_line_h", items.create("fiber_line"),
+                new String[]{"   ", "FLF", "   "},
+                Map.of('F', exact("fiber"), 'L', exact("reinforced_line")));
+        addShaped("fiber_line_v", items.create("fiber_line"),
+                new String[]{" F ", " L ", " F "},
+                Map.of('F', exact("fiber"), 'L', exact("reinforced_line")));
+    }
+
+    private void registerHookRecipes() {
+        addShaped("iron_hook", items.create("iron_hook"),
+                new String[]{" I ", " N "},
+                Map.of('I', material(Material.IRON_INGOT), 'N', material(Material.IRON_NUGGET)));
+        // wooden_hook, golden_hook, cluster_hook, anchor_hook have no crafting recipe in the
+        // datapack, and villager trades were dropped from this port's scope -- so these 4
+        // are only reachable via /reel give right now.
+    }
+
+    private void registerRodRecipes() {
+        for (String line : LINES) {
+            for (String hook : HOOKS) {
+                NamespacedKey key = new NamespacedKey(plugin, "rod_" + line + "_" + hook);
+                ShapedRecipe recipe = new ShapedRecipe(key, rods.construct(line, hook));
+                recipe.shape(ROD_PATTERN);
+                recipe.setIngredient('S', material(Material.STICK));
+                recipe.setIngredient('L', exact(line));
+                recipe.setIngredient('H', exact(hook));
+                Bukkit.addRecipe(recipe);
+            }
+        }
+    }
+
+    private void addShaped(String keyName, ItemStack result, String[] shape, Map<Character, RecipeChoice> ingredients) {
+        NamespacedKey key = new NamespacedKey(plugin, keyName);
+        ShapedRecipe recipe = new ShapedRecipe(key, result);
+        recipe.shape(shape);
+        for (Map.Entry<Character, RecipeChoice> entry : ingredients.entrySet()) {
+            recipe.setIngredient(entry.getKey(), entry.getValue());
+        }
+        Bukkit.addRecipe(recipe);
+    }
+
+    private RecipeChoice material(Material material) {
+        return new RecipeChoice.MaterialChoice(material);
+    }
+
+    private RecipeChoice exact(String reelItemId) {
+        return RecipeChoice.exactChoice(List.of(items.create(reelItemId)));
+    }
+}

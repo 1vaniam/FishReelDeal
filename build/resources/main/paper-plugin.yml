@@ -1,0 +1,20 @@
+name: ReelDeal
+version: '1.0.0'
+main: dev.reeldeal.ReelDealPlugin
+description: 'An incredibly floppy bassline - custom fishing overhaul'
+author: Manchick
+api-version: '26.2'
+
+# Paper plugins don't support YAML-based command declarations at all (the
+# commands: block here is what caused the startup crash -- silently ignored
+# on plugins using paper-plugin.yml, per Paper's docs). The /reel command is
+# registered in code instead (JavaPlugin#registerCommand, in onEnable), and
+# the reeldeal.give permission is registered alongside it there too, so
+# there's one source of truth instead of code and YAML disagreeing.
+
+dependencies:
+  server:
+    PyroFishingPro:
+      load: BEFORE
+      required: false
+      join-classpath: true # needed to reflectively resolve me.arsmagica.API.PyroFishCatchEvent

@@ -1,0 +1,627 @@
+{
+  "anchor_hook": {
+    "base_item": "minecraft:breeze_spawn_egg",
+    "item_name": {
+      "translate": "item.reel.anchor_hook"
+    },
+    "item_model": "reel:anchor_hook",
+    "max_stack_size": 1,
+    "rarity": "epic",
+    "lore": [
+      "",
+      [
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": "\u0001",
+          "color": "white",
+          "font": "reel:specification",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "translate": "tooltip.reel.when_applied_as",
+          "with": [
+            {
+              "translate": "tooltip.reel.hook",
+              "color": "gray",
+              "font": "minecraft:default",
+              "italic": false
+            }
+          ],
+          "color": "dark_gray",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        }
+      ],
+      "",
+      "§l §r§7   Large enough to pull ",
+      "§l §r§7   the fish out §falive§7. ",
+      "§l §r§7   §cOnly works when paired ",
+      "§l §r§7   with §ffiber_line§c. ",
+      "",
+      "§r§9Reel Deal"
+    ],
+    "food": null,
+    "consumable": null
+  },
+  "bullfish": {
+    "base_item": "minecraft:paper",
+    "item_name": {
+      "translate": "item.reel.bullfish"
+    },
+    "item_model": "reel:bullfish",
+    "max_stack_size": 64,
+    "rarity": "common",
+    "lore": [
+      "§r§9Reel Deal"
+    ],
+    "food": {
+      "nutrition": 4,
+      "saturation": 0.3,
+      "can_always_eat": false
+    },
+    "consumable": {
+      "animation": "eat",
+      "consume_seconds": 1.6,
+      "on_consume_effects": [
+        {
+          "type": "minecraft:apply_effects",
+          "effects": [
+            {
+              "id": "minecraft:nausea",
+              "amplifier": 0,
+              "duration": 100
+            }
+          ],
+          "probability": 0.3
+        }
+      ]
+    }
+  },
+  "cluster_hook": {
+    "base_item": "minecraft:bat_spawn_egg",
+    "item_name": {
+      "translate": "item.reel.cluster_hook"
+    },
+    "item_model": "reel:cluster_hook",
+    "max_stack_size": 1,
+    "rarity": "uncommon",
+    "lore": [
+      "",
+      [
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": "\u0001",
+          "color": "white",
+          "font": "reel:specification",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "translate": "tooltip.reel.when_applied_as",
+          "with": [
+            {
+              "translate": "tooltip.reel.hook",
+              "color": "gray",
+              "font": "minecraft:default",
+              "italic": false
+            }
+          ],
+          "color": "dark_gray",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        }
+      ],
+      "",
+      "§l §r§7   Catch §fminerals §7instead  ",
+      "§l §r§7   of fish when fishing  ",
+      "§l §r§7   underground§7.  ",
+      "",
+      "§r§9Reel Deal"
+    ],
+    "food": null,
+    "consumable": null
+  },
+  "cobblefish": {
+    "base_item": "minecraft:paper",
+    "item_name": {
+      "translate": "item.reel.cobblefish"
+    },
+    "item_model": "reel:cobblefish",
+    "max_stack_size": 64,
+    "rarity": "common",
+    "lore": [
+      "§r§9Reel Deal"
+    ],
+    "food": {
+      "nutrition": 4,
+      "saturation": 0.3,
+      "can_always_eat": false
+    },
+    "consumable": {
+      "consume_seconds": 1.6,
+      "animation": "eat"
+    }
+  },
+  "deepfish": {
+    "base_item": "minecraft:paper",
+    "item_name": {
+      "translate": "item.reel.deepfish"
+    },
+    "item_model": "reel:deepfish",
+    "max_stack_size": 64,
+    "rarity": "common",
+    "lore": [
+      "§r§9Reel Deal"
+    ],
+    "food": {
+      "nutrition": 4,
+      "saturation": 0.3,
+      "can_always_eat": false
+    },
+    "consumable": {
+      "consume_seconds": 1.6,
+      "animation": "eat"
+    }
+  },
+  "fiber": {
+    "base_item": "minecraft:camel_spawn_egg",
+    "item_name": {
+      "translate": "item.reel.fiber"
+    },
+    "item_model": "reel:fiber",
+    "max_stack_size": 64,
+    "rarity": "common",
+    "lore": [
+      "§r§9Reel Deal"
+    ],
+    "food": null,
+    "consumable": null
+  },
+  "fiber_line": {
+    "base_item": "minecraft:bogged_spawn_egg",
+    "item_name": {
+      "translate": "item.reel.fiber_line"
+    },
+    "item_model": "reel:fiber_line",
+    "max_stack_size": 1,
+    "rarity": "common",
+    "lore": [
+      "",
+      [
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": "\u0001",
+          "color": "white",
+          "font": "reel:specification",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "translate": "tooltip.reel.when_applied_as",
+          "with": [
+            {
+              "translate": "tooltip.reel.line",
+              "color": "gray",
+              "font": "minecraft:default",
+              "italic": false
+            }
+          ],
+          "color": "dark_gray",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        }
+      ],
+      "",
+      "§l §r§7   The tight fibers can hold ",
+      "§l §r§7   onto some §fbiome-specific ",
+      "§l §r§7   §fspecies§7. ",
+      "",
+      "§r§9Reel Deal"
+    ],
+    "food": null,
+    "consumable": null
+  },
+  "fishroom": {
+    "base_item": "minecraft:paper",
+    "item_name": {
+      "translate": "item.reel.fishroom"
+    },
+    "item_model": "reel:fishroom",
+    "max_stack_size": 64,
+    "rarity": "common",
+    "lore": [
+      "§r§9Reel Deal"
+    ],
+    "food": {
+      "nutrition": 4,
+      "saturation": 0.3,
+      "can_always_eat": false
+    },
+    "consumable": {
+      "consume_seconds": 1.6,
+      "animation": "eat"
+    }
+  },
+  "golden_hook": {
+    "base_item": "minecraft:axolotl_spawn_egg",
+    "item_name": {
+      "translate": "item.reel.golden_hook"
+    },
+    "item_model": "reel:golden_hook",
+    "max_stack_size": 1,
+    "rarity": "common",
+    "lore": [
+      "",
+      [
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": "\u0001",
+          "color": "white",
+          "font": "reel:specification",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "translate": "tooltip.reel.when_applied_as",
+          "with": [
+            {
+              "translate": "tooltip.reel.hook",
+              "color": "gray",
+              "font": "minecraft:default",
+              "italic": false
+            }
+          ],
+          "color": "dark_gray",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        }
+      ],
+      "",
+      "§l §r§7   Doubles the odds of ",
+      "§l §r§7   catching §ftreasure§7. ",
+      "",
+      "§r§9Reel Deal"
+    ],
+    "food": null,
+    "consumable": null
+  },
+  "icehorn": {
+    "base_item": "minecraft:paper",
+    "item_name": {
+      "translate": "item.reel.icehorn"
+    },
+    "item_model": "reel:icehorn",
+    "max_stack_size": 64,
+    "rarity": "common",
+    "lore": [
+      "§r§9Reel Deal"
+    ],
+    "food": {
+      "nutrition": 6,
+      "saturation": 2,
+      "can_always_eat": false
+    },
+    "consumable": {
+      "consume_seconds": 1.6,
+      "on_consume_effects": [
+        {
+          "type": "minecraft:apply_effects",
+          "effects": [
+            {
+              "id": "minecraft:slowness",
+              "duration": 100,
+              "amplifier": 1
+            }
+          ],
+          "probability": 0.2
+        }
+      ],
+      "sound": "minecraft:block.glass.break",
+      "animation": "eat"
+    }
+  },
+  "iron_hook": {
+    "base_item": "minecraft:armadillo_spawn_egg",
+    "item_name": {
+      "translate": "item.reel.iron_hook"
+    },
+    "item_model": "reel:iron_hook",
+    "max_stack_size": 1,
+    "rarity": "common",
+    "lore": [
+      "",
+      [
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": "\u0001",
+          "color": "white",
+          "font": "reel:specification",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "translate": "tooltip.reel.when_applied_as",
+          "with": [
+            {
+              "translate": "tooltip.reel.hook",
+              "color": "gray",
+              "font": "minecraft:default",
+              "italic": false
+            }
+          ],
+          "color": "dark_gray",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        }
+      ],
+      "",
+      "§l §r§7   The §frecognized standard ",
+      "§l §r§7   among the professionals. ",
+      "",
+      "§r§9Reel Deal"
+    ],
+    "food": null,
+    "consumable": null
+  },
+  "reinforced_line": {
+    "base_item": "minecraft:blaze_spawn_egg",
+    "item_name": {
+      "translate": "item.reel.reinforced_line"
+    },
+    "item_model": "reel:reinforced_line",
+    "max_stack_size": 1,
+    "rarity": "common",
+    "lore": [
+      "",
+      [
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": "\u0001",
+          "color": "white",
+          "font": "reel:specification",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "translate": "tooltip.reel.when_applied_as",
+          "with": [
+            {
+              "translate": "tooltip.reel.line",
+              "color": "gray",
+              "font": "minecraft:default",
+              "italic": false
+            }
+          ],
+          "color": "dark_gray",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        }
+      ],
+      "",
+      "§l §r§7   Sturdy and reliable to ",
+      "§l §r§7   hold onto §ffish of any ",
+      "§l §r§7   §fgenus§7. ",
+      "",
+      "§r§9Reel Deal"
+    ],
+    "food": null,
+    "consumable": null
+  },
+  "wooden_hook": {
+    "base_item": "minecraft:allay_spawn_egg",
+    "item_name": {
+      "translate": "item.reel.wooden_hook"
+    },
+    "item_model": "reel:wooden_hook",
+    "max_stack_size": 1,
+    "rarity": "common",
+    "lore": [
+      "",
+      [
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": "\u0001",
+          "color": "white",
+          "font": "reel:specification",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "translate": "tooltip.reel.when_applied_as",
+          "with": [
+            {
+              "translate": "tooltip.reel.hook",
+              "color": "gray",
+              "font": "minecraft:default",
+              "italic": false
+            }
+          ],
+          "color": "dark_gray",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        }
+      ],
+      "",
+      "§l §r§7   Too weak to hold onto ",
+      "§l §r§7   any fish, only §fjunk ",
+      "§l §r§7   can be promised. ",
+      "",
+      "§r§9Reel Deal"
+    ],
+    "food": null,
+    "consumable": null
+  },
+  "woven_line": {
+    "base_item": "minecraft:bee_spawn_egg",
+    "item_name": {
+      "translate": "item.reel.woven_line"
+    },
+    "item_model": "reel:woven_line",
+    "max_stack_size": 1,
+    "rarity": "common",
+    "lore": [
+      "",
+      [
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": "\u0001",
+          "color": "white",
+          "font": "reel:specification",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "translate": "tooltip.reel.when_applied_as",
+          "with": [
+            {
+              "translate": "tooltip.reel.line",
+              "color": "gray",
+              "font": "minecraft:default",
+              "italic": false
+            }
+          ],
+          "color": "dark_gray",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        }
+      ],
+      "",
+      "§l §r§7   Too fragile to hold onto ",
+      "§l §r§7   anything larger than the ",
+      "§l §r§7   §ftiniest of fish§7. ",
+      "",
+      "§r§9Reel Deal"
+    ],
+    "food": null,
+    "consumable": null
+  }
+}

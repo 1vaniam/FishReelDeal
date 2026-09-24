@@ -1,0 +1,3 @@
+pyrofishing-integration:
+  enabled: true
+  anchor-hook-chance: 0.25
