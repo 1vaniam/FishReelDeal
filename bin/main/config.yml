@@ -1,3 +1,10 @@
 pyrofishing-integration:
   enabled: true
   anchor-hook-chance: 0.25
+
+rod-add-lore:
+  mode: full
+  summary:
+    line-label: "Line"
+    hook-label: "Hook"
+    color: "dark_aqua"

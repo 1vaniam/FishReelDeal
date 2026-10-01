@@ -23,33 +23,34 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * Ports {@code data/reel/loot_table/definition/*.json} from the datapack.
- * Each of those files was a one-entry loot table used to {@code /loot give}
- * a fixed, fully-componentized item; here they're just baked ItemStack
- * templates handed out on request.
- */
 public final class ItemRegistry {
 
     private final Plugin plugin;
+    private final File itemsFile;
     private final Map<String, ItemStack> templates = new LinkedHashMap<>();
     private final Map<String, ItemDefinition> definitions = new LinkedHashMap<>();
 
     public ItemRegistry(Plugin plugin) {
         this.plugin = plugin;
+        this.itemsFile = new File(plugin.getDataFolder(), "items.json");
     }
 
     public void load() {
+        ensureItemsFileExists();
         templates.clear();
         definitions.clear();
         definitions.putAll(readDefinitions());
@@ -57,6 +58,22 @@ public final class ItemRegistry {
             templates.put(def.id(), build(def));
         }
         plugin.getLogger().info("Loaded " + templates.size() + " reel items: " + templates.keySet());
+    }
+
+    private void ensureItemsFileExists() {
+        if (itemsFile.exists()) {
+            return;
+        }
+        itemsFile.getParentFile().mkdirs();
+        try (InputStream in = plugin.getResource("reel/items.json")) {
+            if (in == null) {
+                throw new IllegalStateException("Bundled reel/items.json missing from the plugin jar");
+            }
+            Files.copy(in, itemsFile.toPath());
+            plugin.getLogger().info("Seeded default items.json at " + itemsFile);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to create default items.json at " + itemsFile, e);
+        }
     }
 
     public ItemDefinition definition(String id) {
@@ -67,18 +84,14 @@ public final class ItemRegistry {
         return def;
     }
 
-    /** All known reel item ids, e.g. for tab completion and validation. */
     public java.util.Set<String> ids() {
         return templates.keySet();
     }
 
-    /**
-     * The item's own lore body -- the descriptive §7 lines between the name
-     * header and the "Reel Deal" footer, stripped of the surrounding blank
-     * lines. Reused verbatim by {@link FishingRodFactory} when it stitches
-     * a line's and a hook's lore together onto a constructed rod, same as
-     * the datapack's recipe results do.
-     */
+    public String categoryOf(String id) {
+        return definition(id).category();
+    }
+
     public java.util.List<Component> ownLoreBody(String id) {
         ItemDefinition def = definition(id);
         JsonArray lore = def.loreJson();
@@ -92,11 +105,6 @@ public final class ItemRegistry {
         return body;
     }
 
-    /**
-     * The icon + item-name header as it appears once an item is applied to
-     * a rod (no "when applied as hook/line" wrapper -- that wrapper is only
-     * for the item's own standalone tooltip).
-     */
     public Component appliedNameHeader(String id) {
         ItemDefinition def = definition(id);
         Component name = def.itemNameJson() != null
@@ -110,7 +118,6 @@ public final class ItemRegistry {
                 .append(Component.text(" "));
     }
 
-    /** Returns a fresh copy so callers can freely mutate stack size/meta. */
     public ItemStack create(String id) {
         ItemStack template = templates.get(id);
         if (template == null) {
@@ -129,8 +136,7 @@ public final class ItemRegistry {
     }
 
     private Map<String, ItemDefinition> readDefinitions() {
-        try (Reader reader = new InputStreamReader(
-                plugin.getResource("reel/items.json"), StandardCharsets.UTF_8)) {
+        try (Reader reader = new InputStreamReader(new FileInputStream(itemsFile), StandardCharsets.UTF_8)) {
             Gson gson = new Gson();
             JsonObject root = gson.fromJson(reader, JsonObject.class);
             Map<String, ItemDefinition> result = new LinkedHashMap<>();
@@ -138,8 +144,8 @@ public final class ItemRegistry {
                 result.put(id, ItemDefinition.fromJson(id, root.getAsJsonObject(id)));
             }
             return result;
-        } catch (IOException | NullPointerException e) {
-            throw new IllegalStateException("Failed to load reel/items.json from plugin jar", e);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load items.json from " + itemsFile, e);
         }
     }
 
@@ -152,7 +158,6 @@ public final class ItemRegistry {
         ItemStack stack = new ItemStack(base);
         ItemMeta meta = stack.getItemMeta();
 
-        // reel:identifier custom_data -> PDC, so listeners/recipes can look items up.
         meta.getPersistentDataContainer().set(
                 ReelKeys.IDENTIFIER, org.bukkit.persistence.PersistentDataType.STRING, "reel:" + def.id());
 
@@ -185,7 +190,6 @@ public final class ItemRegistry {
         return stack;
     }
 
-    /** org.bukkit.inventory.ItemRarity (io.papermc.paper.inventory.ItemRarity is deprecated for removal). */
     private void applyRarity(ItemMeta meta, String rarity) {
         try {
             meta.setRarity(ItemRarity.valueOf(rarity.toUpperCase(Locale.ROOT)));
@@ -204,14 +208,6 @@ public final class ItemRegistry {
         meta.setFood(component);
     }
 
-    /**
-     * minecraft:consumable, split from minecraft:food since the 1.21.2
-     * food/consumable rework -- lives on ItemStack's DataComponent API
-     * (io.papermc.paper.datacomponent), not on ItemMeta. Only the
-     * apply_effects ConsumeEffect variant shows up anywhere in this
-     * datapack's items (bullfish's nausea chance, icehorn's slowness
-     * chance + glass-break sound), so that's the only branch implemented.
-     */
     private void applyConsumable(ItemStack stack, JsonObject consumable) {
         Consumable.Builder builder = Consumable.consumable()
                 .consumeSeconds(consumable.get("consume_seconds").getAsFloat());
@@ -227,7 +223,7 @@ public final class ItemRegistry {
             for (JsonElement el : consumable.getAsJsonArray("on_consume_effects")) {
                 JsonObject effect = el.getAsJsonObject();
                 if (!"minecraft:apply_effects".equals(effect.get("type").getAsString())) {
-                    continue; // no other ConsumeEffect type is used in this datapack's items
+                    continue;
                 }
                 List<PotionEffect> potionEffects = new ArrayList<>();
                 for (JsonElement pe : effect.getAsJsonArray("effects")) {
@@ -256,13 +252,6 @@ public final class ItemRegistry {
         return lore;
     }
 
-    /**
-     * Each lore entry is either a bare legacy-formatted string (the common
-     * case, e.g. "§l §r§7   Too weak...") or a structured component
-     * (object/array) for lines that mix translations in, e.g. the
-     * "when applied as: <hook/line>" line. Minecraft's text format allows
-     * both per-entry, so branch on shape rather than assuming one.
-     */
     private Component parseLoreLine(JsonElement el) {
         if (el.isJsonPrimitive() && el.getAsJsonPrimitive().isString()) {
             return LegacyComponentSerializer.legacySection().deserialize(el.getAsString());

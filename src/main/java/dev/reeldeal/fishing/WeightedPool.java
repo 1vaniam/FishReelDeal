@@ -4,15 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-/**
- * A flat weighted-random pool, standing in for a vanilla loot pool's single
- * roll across its (already-flattened) entries. Composite entry types don't
- * need their own model here -- {@code group} just means "add these
- * candidates to the same pool", which is exactly what repeated {@link #add}
- * calls do, and {@code alternatives} (first eligible child wins) is modeled
- * as a single candidate whose own eligibility/value is resolved by the
- * caller before adding it.
- */
+
 public final class WeightedPool<T> {
 
     private record Candidate<T>(T value, int weight, boolean eligible) {
@@ -31,7 +23,6 @@ public final class WeightedPool<T> {
         return this;
     }
 
-    /** @return the picked value, or null if no eligible candidate had positive weight. */
     public T pick(Random random) {
         int total = 0;
         for (Candidate<T> c : candidates) {

@@ -7,16 +7,6 @@ import org.bukkit.block.Biome;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Ports every {@code data/reel/tags/worldgen/biome/**} tag as a plain
- * {@code Set<Biome>} -- these datapack tags only ever gate loot table
- * conditions, so there's no need to keep them as real registry tags on
- * the plugin side.
- * <p>
- * {@code Biome} stopped being an enum as of 1.21.3 (it's a registry-backed
- * interface now, so custom/datapack biomes can exist) -- instances come
- * from {@link Registry#BIOME} by key instead of enum constants.
- */
 public final class ReelBiomes {
 
     public static final Set<Biome> JUNK_BADLANDS = biomes("badlands", "eroded_badlands", "wooded_badlands");
@@ -60,7 +50,6 @@ public final class ReelBiomes {
 
     public static final Set<Biome> PERMITS_FROGS = JUNK_SWAMP;
 
-    /** #minecraft:is_ocean + #minecraft:is_river, reconstructed from the junk ocean/warm_ocean/river sets. */
     public static final Set<Biome> PERMITS_SQUIDS = combine(JUNK_OCEAN, JUNK_WARM_OCEAN, JUNK_RIVER);
 
     private static Set<Biome> biomes(String... paths) {

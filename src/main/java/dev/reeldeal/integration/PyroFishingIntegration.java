@@ -1,54 +1,31 @@
 package dev.reeldeal.integration;
 
+import dev.reeldeal.fishing.HookedFishManager;
 import dev.reeldeal.item.FishingRodFactory;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Optional integration with PyroFishingPro: anchor_hook gets a chance to
- * spawn a live cod/salmon/pufferfish/tropical_fish (flung at the player,
- * same flavor as our own anchor_hook + fiber_line mechanic) whenever Pyro
- * resolves a catch, on the idea that killing that live fish is what
- * Pyro's own drop-on-kill behavior already turns into a Pyro fish item --
- * so this is a bonus path into Pyro's fish economy through our gear, not
- * a replacement system for it.
- * <p>
- * Deliberately reflection-based, not a compile-time dependency: Pyro's
- * {@code me.arsmagica.API.PyroFishCatchEvent} isn't on our build classpath
- * (and shouldn't be -- it's a commercial plugin's internals), so this
- * resolves the event class and its getters by name at runtime, and does
- * nothing at all if PyroFishingPro isn't installed. Still needs
- * {@code join-classpath: true} on the PyroFishingPro entry in
- * paper-plugin.yml's dependencies so our classloader is even allowed to
- * see Pyro's classes at runtime.
- * <p>
- * Enabled/chance are read from config.yml
- * (pyrofishing-integration.enabled / .anchor-hook-chance) and passed in
- * via {@link #tryRegister}, so this can be tuned or disabled without a
- * rebuild.
- * <p>
- * IMPORTANT CAVEAT: PyroFishCatchEvent is not Cancellable, and I don't
- * have visibility into whether Pyro reads getItemStack() again after
- * firing the event or already committed to handing it over. The
- * suppression attempt below (zeroing the stack) is a best-effort guess,
- * untested against the real plugin -- if it doesn't work, players will
- * just get both the Pyro item and the live-mob bonus, which is a safe
- * failure mode, not a broken one. Confirm in-game and simplify this
- * class if suppression turns out not to do anything.
- */
 public final class PyroFishingIntegration implements Listener {
 
     private static final String PLUGIN_NAME = "PyroFishingPro";
@@ -58,8 +35,8 @@ public final class PyroFishingIntegration implements Listener {
             EntityType.COD, EntityType.SALMON, EntityType.PUFFERFISH, EntityType.TROPICAL_FISH
     };
 
-    /** @return true if PyroFishingPro was found and the integration registered. */
-    public static boolean tryRegister(Plugin plugin, FishingRodFactory rods, boolean enabled, double triggerChance) {
+    public static boolean tryRegister(Plugin plugin, FishingRodFactory rods, boolean enabled, double triggerChance,
+                                      boolean replaceCatch, boolean debug, HookedFishManager hooked) {
         if (!enabled) {
             return false;
         }
@@ -81,7 +58,8 @@ public final class PyroFishingIntegration implements Listener {
             return false;
         }
 
-        PyroFishingIntegration integration = new PyroFishingIntegration(rods, triggerChance);
+        PyroFishingIntegration integration = new PyroFishingIntegration(plugin, rods, triggerChance, replaceCatch, debug, hooked);
+        instance = integration;
         @SuppressWarnings("unchecked")
         Class<? extends Event> typedEventClass = (Class<? extends Event>) eventClass;
 
@@ -98,36 +76,153 @@ public final class PyroFishingIntegration implements Listener {
         return true;
     }
 
+    private static volatile PyroFishingIntegration instance;
+
+    public static boolean replacingAnchorCatches() {
+        PyroFishingIntegration i = instance;
+        return i != null && i.replaceCatch && i.hooked.enabled();
+    }
+
+    public static boolean caughtSince(UUID player, long millis) {
+        PyroFishingIntegration i = instance;
+        Long last = i != null ? i.lastCatch.get(player) : null;
+        return last != null && last >= millis;
+    }
+
+    private final Map<UUID, Long> lastCatch = new ConcurrentHashMap<>();
+    private final HookedFishManager hooked;
+    private final Plugin plugin;
     private final FishingRodFactory rods;
     private final double triggerChance;
+    private final boolean replaceCatch;
+    private final boolean debug;
     private final Random random = new Random();
 
-    private PyroFishingIntegration(FishingRodFactory rods, double triggerChance) {
+    private PyroFishingIntegration(Plugin plugin, FishingRodFactory rods, double triggerChance,
+                                   boolean replaceCatch, boolean debug, HookedFishManager hooked) {
+        this.hooked = hooked;
+        this.plugin = plugin;
         this.rods = rods;
         this.triggerChance = triggerChance;
+        this.replaceCatch = replaceCatch;
+        this.debug = debug;
     }
 
     private void onPyroCatch(Event event) {
         try {
             Player player = (Player) invoke(event, "getPlayer");
+            lastCatch.put(player.getUniqueId(), System.currentTimeMillis());
             ItemStack rod = player.getInventory().getItemInMainHand();
             if (!rods.isConstructed(rod) || !"reel:anchor_hook".equals(rods.hookOf(rod))) {
                 return;
             }
-            if (random.nextDouble() > triggerChance) {
+
+            if (replaceCatch && hooked.enabled()) {
+                ItemStack pyroItem = (ItemStack) invoke(event, "getItemStack");
+                if (pyroItem != null && !pyroItem.getType().isAir()) {
+                    String model = hooked.modelFor(pyroItem);
+                    if (model != null) {
+                        ItemStack fish = pyroItem.clone();
+                        hooked.spawn(player, fish, model);
+                        suppressLater(player, fish);
+                    } else {
+                        log("No hooked model for Pyro fish: " + pyroItem.getType() + " -- left as is.");
+                    }
+                }
                 return;
             }
 
-            // Best-effort, unconfirmed suppression of Pyro's own item -- see class doc.
-            ItemStack pyroItem = (ItemStack) invoke(event, "getItemStack");
-            if (pyroItem != null) {
-                pyroItem.setAmount(0);
+            if (random.nextDouble() > triggerChance) {
+                return;
             }
-
             spawnAndFlingLiveFish(player);
         } catch (ReflectiveOperationException | ClassCastException e) {
             Bukkit.getLogger().warning("[ReelDeal] PyroFishingPro integration reflection call failed "
                     + "(likely an API shape change on their end): " + e);
+        }
+    }
+
+    private static final int SUPPRESS_TRIES = 20;
+
+    private void suppressLater(Player player, ItemStack pyroStack) {
+        final String name = plainName(pyroStack);
+        new BukkitRunnable() {
+            private int tries;
+            private int remaining = pyroStack.getAmount();
+
+            @Override
+            public void run() {
+                tries++;
+                if (!player.isOnline()) {
+                    cancel();
+                    return;
+                }
+                ItemStack exact = pyroStack.clone();
+                exact.setAmount(remaining);
+                var leftover = player.getInventory().removeItem(exact);
+                remaining = leftover.isEmpty() ? 0 : leftover.values().iterator().next().getAmount();
+
+                var inv = player.getInventory();
+                for (int slot = 0; slot < inv.getSize() && remaining > 0; slot++) {
+                    ItemStack it = inv.getItem(slot);
+                    if (it != null && it.getType() == pyroStack.getType() && plainName(it).equals(name)) {
+                        int take = Math.min(remaining, it.getAmount());
+                        remaining -= take;
+                        if (take >= it.getAmount()) {
+                            inv.setItem(slot, null);
+                        } else {
+                            it.setAmount(it.getAmount() - take);
+                        }
+                    }
+                }
+
+                if (remaining > 0) {
+                    for (Entity e : player.getNearbyEntities(8, 8, 8)) {
+                        if (remaining <= 0) {
+                            break;
+                        }
+                        if (e instanceof Item drop && drop.getTicksLived() < 60
+                                && drop.getItemStack().getType() == pyroStack.getType()
+                                && plainName(drop.getItemStack()).equals(name)) {
+                            ItemStack st = drop.getItemStack();
+                            int take = Math.min(remaining, st.getAmount());
+                            remaining -= take;
+                            if (take >= st.getAmount()) {
+                                drop.remove();
+                            } else {
+                                st.setAmount(st.getAmount() - take);
+                                drop.setItemStack(st);
+                            }
+                        }
+                    }
+                }
+
+                if (remaining <= 0) {
+                    log("Pyro reward removed (" + pyroStack.getType() + ", try " + tries + ")");
+                    cancel();
+                } else if (tries >= SUPPRESS_TRIES) {
+                    plugin.getLogger().warning("Couldn't find Pyro's reward to remove ("
+                            + pyroStack.getType() + " '" + name + "' x" + pyroStack.getAmount()
+                            + ") after " + tries + " ticks.");
+                    cancel();
+                }
+            }
+        }.runTaskTimer(plugin, 1L, 1L);
+    }
+
+    private static String plainName(ItemStack stack) {
+        ItemMeta meta = stack.getItemMeta();
+        if (meta == null) {
+            return "";
+        }
+        Component c = meta.hasDisplayName() ? meta.displayName()
+                : meta.hasItemName() ? meta.itemName() : null;
+        return c == null ? "" : PlainTextComponentSerializer.plainText().serialize(c);
+    }
+
+    private void log(String msg) {
+        if (debug) {
+            plugin.getLogger().info(msg);
         }
     }
 

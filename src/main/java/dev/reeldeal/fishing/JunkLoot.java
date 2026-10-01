@@ -8,21 +8,6 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.Random;
 
-/**
- * Ports {@code data/reel/loot_table/fishing/junk.json} + its 14
- * {@code junk/<biome>.json} sub-tables.
- * <p>
- * junk.json's top pool has 6 sibling candidates: 4 plain items (weight 10
- * each) plus two {@code minecraft:alternatives} slots. An alternatives
- * resolves to whichever child's conditions pass first (in file order);
- * that winning child's own weight then carries into the enclosing pool's
- * draw, same as if it had been written there directly -- so the wooden-hook
- * slot is weight 1 when you're already holding a wooden_hook (its first,
- * conditioned child) and weight 5 otherwise (its unconditioned fallback),
- * and the biome-table slot is weight 55 whenever any biome branch matches.
- * The biome check order below mirrors the datapack file's order exactly,
- * since first-match order is what determines which biome table applies.
- */
 public final class JunkLoot {
 
     private final ItemRegistry items;
@@ -37,8 +22,7 @@ public final class JunkLoot {
         pool.add(new ItemStack(Material.BONE), 10);
         pool.add(new ItemStack(Material.STICK), 10);
         pool.add(uniformCount(Material.CLAY_BALL, 1, 2, random), 10);
-        // alternatives: weight1 if you're already on wooden_hook, else weight5 (both children
-        // resolve to the same item -- only the propagated weight differs, see class doc).
+
         pool.add(items.create("wooden_hook"), "wooden_hook".equals(currentHookId) ? 1 : 5);
 
         ItemStack biomeItem = resolveBiomeTable(catchLocation, random);
@@ -50,7 +34,6 @@ public final class JunkLoot {
         return result != null ? result : new ItemStack(Material.STICK);
     }
 
-    /** Mirrors junk.json's biome-alternatives order exactly -- first match wins. */
     private ItemStack resolveBiomeTable(Location loc, Random random) {
         if (loc.getBlockY() <= 48) {
             return pick(random, weighted(Material.FLINT, 40), weighted(Material.STRING, 20),
@@ -67,7 +50,6 @@ public final class JunkLoot {
                     weighted(uniformCount(Material.SNOWBALL, 1, 2, random), 10), weighted(Material.ICE, 30));
         }
         if (biome == Biome.FLOWER_FOREST) {
-            // Equal weight (no explicit weights in source), one of 12 flowers.
             Material[] flowers = {Material.DANDELION, Material.POPPY, Material.BLUE_ORCHID, Material.ALLIUM,
                     Material.AZURE_BLUET, Material.RED_TULIP, Material.ORANGE_TULIP, Material.WHITE_TULIP,
                     Material.PINK_TULIP, Material.OXEYE_DAISY, Material.CORNFLOWER, Material.LILY_OF_THE_VALLEY};
@@ -113,8 +95,6 @@ public final class JunkLoot {
         }
         return null;
     }
-
-    // --- small local helpers, kept in this file since only junk.json needs biome-branching this deep ---
 
     private record Weighted(ItemStack stack, int weight) {
     }

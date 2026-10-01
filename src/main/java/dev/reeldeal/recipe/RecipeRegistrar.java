@@ -13,13 +13,6 @@ import org.bukkit.plugin.Plugin;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Ports every {@code data/reel/recipe/*.json} file. The 15 line/hook combo
- * files (identical pattern, only the two ingredients differ) collapse into
- * one loop over {@link #LINES} x {@link #HOOKS} using
- * {@link FishingRodFactory#construct} for the result, instead of 15
- * hand-written recipes.
- */
 public final class RecipeRegistrar {
 
     private static final String[] ROD_PATTERN = {"  S", " SL", "S H"};
@@ -36,17 +29,18 @@ public final class RecipeRegistrar {
         this.rods = rods;
     }
 
+    private static final List<String> STATIC_RECIPE_KEYS = List.of(
+            "woven_line_h", "woven_line_v", "reinforced_line", "fiber_line_h", "fiber_line_v", "iron_hook");
+
     public void registerAll() {
-        // pack.mcmeta filters out minecraft:recipe/fishing_rod so the plain vanilla
-        // rod recipe can't bypass the line+hook system -- mirror that here.
         Bukkit.removeRecipe(NamespacedKey.minecraft("fishing_rod"));
+        removeManagedRecipes();
 
         registerLineRecipes();
         registerHookRecipes();
         registerRodRecipes();
     }
 
-    /** woven_line (string+stick) -> reinforced_line (+iron nuggets) -> fiber_line (+fiber x2). */
     private void registerLineRecipes() {
         addShaped("woven_line_h", items.create("woven_line"),
                 new String[]{"   ", "SIS", "   "},
@@ -71,9 +65,17 @@ public final class RecipeRegistrar {
         addShaped("iron_hook", items.create("iron_hook"),
                 new String[]{" I ", " N "},
                 Map.of('I', material(Material.IRON_INGOT), 'N', material(Material.IRON_NUGGET)));
-        // wooden_hook, golden_hook, cluster_hook, anchor_hook have no crafting recipe in the
-        // datapack, and villager trades were dropped from this port's scope -- so these 4
-        // are only reachable via /reel give right now.
+    }
+
+    private void removeManagedRecipes() {
+        for (String key : STATIC_RECIPE_KEYS) {
+            Bukkit.removeRecipe(new NamespacedKey(plugin, key));
+        }
+        for (String line : LINES) {
+            for (String hook : HOOKS) {
+                Bukkit.removeRecipe(new NamespacedKey(plugin, "rod_" + line + "_" + hook));
+            }
+        }
     }
 
     private void registerRodRecipes() {

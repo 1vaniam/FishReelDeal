@@ -58,7 +58,8 @@
       "§r§9Reel Deal"
     ],
     "food": null,
-    "consumable": null
+    "consumable": null,
+    "category": "hook"
   },
   "bullfish": {
     "base_item": "minecraft:paper",
@@ -92,7 +93,8 @@
           "probability": 0.3
         }
       ]
-    }
+    },
+    "category": "fish"
   },
   "cluster_hook": {
     "base_item": "minecraft:bat_spawn_egg",
@@ -152,7 +154,8 @@
       "§r§9Reel Deal"
     ],
     "food": null,
-    "consumable": null
+    "consumable": null,
+    "category": "hook"
   },
   "cobblefish": {
     "base_item": "minecraft:paper",
@@ -173,7 +176,8 @@
     "consumable": {
       "consume_seconds": 1.6,
       "animation": "eat"
-    }
+    },
+    "category": "fish"
   },
   "deepfish": {
     "base_item": "minecraft:paper",
@@ -194,7 +198,8 @@
     "consumable": {
       "consume_seconds": 1.6,
       "animation": "eat"
-    }
+    },
+    "category": "fish"
   },
   "fiber": {
     "base_item": "minecraft:camel_spawn_egg",
@@ -208,7 +213,8 @@
       "§r§9Reel Deal"
     ],
     "food": null,
-    "consumable": null
+    "consumable": null,
+    "category": "material"
   },
   "fiber_line": {
     "base_item": "minecraft:bogged_spawn_egg",
@@ -268,7 +274,8 @@
       "§r§9Reel Deal"
     ],
     "food": null,
-    "consumable": null
+    "consumable": null,
+    "category": "line"
   },
   "fishroom": {
     "base_item": "minecraft:paper",
@@ -289,7 +296,8 @@
     "consumable": {
       "consume_seconds": 1.6,
       "animation": "eat"
-    }
+    },
+    "category": "fish"
   },
   "golden_hook": {
     "base_item": "minecraft:axolotl_spawn_egg",
@@ -348,7 +356,8 @@
       "§r§9Reel Deal"
     ],
     "food": null,
-    "consumable": null
+    "consumable": null,
+    "category": "hook"
   },
   "icehorn": {
     "base_item": "minecraft:paper",
@@ -383,7 +392,8 @@
       ],
       "sound": "minecraft:block.glass.break",
       "animation": "eat"
-    }
+    },
+    "category": "fish"
   },
   "iron_hook": {
     "base_item": "minecraft:armadillo_spawn_egg",
@@ -442,7 +452,8 @@
       "§r§9Reel Deal"
     ],
     "food": null,
-    "consumable": null
+    "consumable": null,
+    "category": "hook"
   },
   "reinforced_line": {
     "base_item": "minecraft:blaze_spawn_egg",
@@ -502,7 +513,8 @@
       "§r§9Reel Deal"
     ],
     "food": null,
-    "consumable": null
+    "consumable": null,
+    "category": "line"
   },
   "wooden_hook": {
     "base_item": "minecraft:allay_spawn_egg",
@@ -562,7 +574,8 @@
       "§r§9Reel Deal"
     ],
     "food": null,
-    "consumable": null
+    "consumable": null,
+    "category": "hook"
   },
   "woven_line": {
     "base_item": "minecraft:bee_spawn_egg",
@@ -622,6 +635,7 @@
       "§r§9Reel Deal"
     ],
     "food": null,
-    "consumable": null
+    "consumable": null,
+    "category": "line"
   }
 }

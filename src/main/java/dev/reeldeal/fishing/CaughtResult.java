@@ -3,11 +3,6 @@ package dev.reeldeal.fishing;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 
-/**
- * What an anchor_hook catch resolves to: either a normal item (cod, salmon,
- * ...) or a live mob to spawn and fling at the player instead of handing
- * over an item at all.
- */
 public sealed interface CaughtResult {
 
     record AsItem(ItemStack stack) implements CaughtResult {

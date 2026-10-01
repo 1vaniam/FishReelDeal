@@ -9,21 +9,6 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.Random;
 
-/**
- * Ports {@code data/reel/loot_table/fishing/fish.json} + its 3
- * {@code fish/<line>.json} tier tables -- with one deliberate departure
- * from the source datapack: anchor_hook + fiber_line's squid/glow_squid/
- * frog catches no longer ride along as tagged spawn-egg items waiting for
- * a drop-triggered substitute mechanic. They spawn the real mob directly
- * at catch time and fling it at the player, which is simpler, doesn't
- * depend on the (unported) substitute mechanic, and closes the spawn-egg
- * guard gap for these catches entirely -- there's no longer an item to
- * guard against. Conditions were also redefined at the same time:
- * squid -> river only, dolphin -> any ocean (new), glow_squid -> y<=32
- * (unchanged), frog -> swamp (unchanged). This only applies at the
- * fiber_line tier; anchor_hook has no effect at the other two tiers,
- * same as in the source datapack.
- */
 public final class FishLoot {
 
     private final ItemRegistry items;
@@ -40,8 +25,6 @@ public final class FishLoot {
             default -> defaultWoven(random);
         };
     }
-
-    // --- fiber_line tier (richest pool) ---
 
     private CaughtResult anchorFiber(Location loc, Random random) {
         Biome biome = loc.getBlock().getBiome();
@@ -76,7 +59,6 @@ public final class FishLoot {
         return CaughtResult.item(result != null ? result : new ItemStack(Material.COD));
     }
 
-    /** deepfish (y<=0) checked ahead of cobblefish (y<=48) since it's the tighter/rarer bound, then biome fish in file order. */
     private ItemStack resolveSpecialFish(Location loc) {
         if (loc.getBlockY() <= 0) {
             return items.create("deepfish");
@@ -97,7 +79,6 @@ public final class FishLoot {
         return null;
     }
 
-    // --- reinforced_line tier ---
 
     private CaughtResult defaultCommon(Random random) {
         WeightedPool<ItemStack> pool = new WeightedPool<>();
@@ -109,7 +90,6 @@ public final class FishLoot {
         return CaughtResult.item(result != null ? result : new ItemStack(Material.COD));
     }
 
-    // --- woven_line tier (weakest pool) ---
 
     private CaughtResult defaultWoven(Random random) {
         WeightedPool<ItemStack> pool = new WeightedPool<>();

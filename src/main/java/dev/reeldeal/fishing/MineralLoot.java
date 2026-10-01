@@ -6,12 +6,6 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.Random;
 
-/**
- * Ports {@code data/reel/loot_table/fishing/mineral.json} + its 3
- * {@code mineral/<line>.json} tier tables. mineral.json's line branch is a
- * true {@code minecraft:alternatives} (mutually exclusive by line, first
- * match), same as fish.json's.
- */
 public final class MineralLoot {
 
     public ItemStack resolve(String lineId, Location catchLocation, Random random) {

@@ -1,7 +1,9 @@
 package dev.reeldeal.fishing;
 
+import dev.reeldeal.integration.PyroFishingIntegration;
 import dev.reeldeal.item.FishingRodFactory;
 import dev.reeldeal.item.ItemRegistry;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
@@ -17,34 +19,16 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
 
 import java.util.Random;
 
-/**
- * Ports {@code data/minecraft/loot_table/gameplay/fishing.json} -- the
- * datapack's replacement of vanilla's entire fishing root table.
- * <p>
- * wooden_hook always gives junk. Otherwise it's a weighted draw between
- * junk / treasure (open water only) / mineral-or-fish, with golden_hook
- * improving the treasure odds and reducing junk odds (the vanilla
- * Luck of the Sea role, just baked into the hook instead), further scaled
- * by an actual Luck of the Sea enchantment via the same
- * {@code weight + quality * luck} formula vanilla uses. cluster_hook at
- * y<=48 gets minerals instead of fish.
- * <p>
- * Runs at {@link EventPriority#HIGH} deliberately: on a server also running
- * PyroFishingPro, that plugin hooks the same vanilla event at LOWEST/NORMAL
- * priority (confirmed against its own public method signatures, not its
- * internal logic), so running higher here guarantees Reel Deal's result
- * wins on Reel Deal rods regardless of plugin load order -- while
- * {@code rods.isConstructed(rod)} below still means we never touch
- * anything caught on a non-Reel-Deal rod in the first place.
- */
 public final class FishingLootResolver implements Listener {
 
     private enum Category { JUNK, TREASURE, MINERAL, FISH }
 
+    private final Plugin plugin;
     private final FishingRodFactory rods;
     private final JunkLoot junkLoot;
     private final MineralLoot mineralLoot;
@@ -52,7 +36,8 @@ public final class FishingLootResolver implements Listener {
     private final TreasureLoot treasureLoot;
     private final Random random = new Random();
 
-    public FishingLootResolver(ItemRegistry items, FishingRodFactory rods) {
+    public FishingLootResolver(Plugin plugin, ItemRegistry items, FishingRodFactory rods) {
+        this.plugin = plugin;
         this.rods = rods;
         this.junkLoot = new JunkLoot(items);
         this.mineralLoot = new MineralLoot();
@@ -60,7 +45,7 @@ public final class FishingLootResolver implements Listener {
         this.treasureLoot = new TreasureLoot(items);
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = false)
     public void onFish(PlayerFishEvent event) {
         if (event.getState() != PlayerFishEvent.State.CAUGHT_FISH) {
             return;
@@ -68,7 +53,10 @@ public final class FishingLootResolver implements Listener {
         Player player = event.getPlayer();
         ItemStack rod = player.getInventory().getItemInMainHand();
         if (!rods.isConstructed(rod)) {
-            return; // not a reel rod (e.g. a plain vanilla one from creative) -- leave vanilla loot alone
+            return;
+        }
+        if (event.isCancelled()) {
+            event.setCancelled(false);
         }
         if (!(event.getCaught() instanceof Item caughtItem)) {
             return;
@@ -79,30 +67,52 @@ public final class FishingLootResolver implements Listener {
         FishHook hook = event.getHook();
         Location loc = hook.getLocation();
 
-        Category category = resolveCategory(hookId, hook, rod, loc);
+        CaughtResult outcome = resolveOutcome(hookId, lineId, hook, rod, loc);
 
-        if (category == Category.FISH) {
-            CaughtResult result = fishLoot.resolve(lineId, hookId, loc, random);
-            if (result instanceof CaughtResult.AsMob asMob) {
-                caughtItem.remove();
-                spawnAndFling(asMob.type(), loc, player);
-            } else if (result instanceof CaughtResult.AsItem asItem) {
-                caughtItem.setItemStack(asItem.stack());
-            }
+        if ("anchor_hook".equals(hookId) && PyroFishingIntegration.replacingAnchorCatches()) {
+            caughtItem.remove();
+            long started = System.currentTimeMillis();
+            Location at = loc.clone();
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (!PyroFishingIntegration.caughtSince(player.getUniqueId(), started - 250)) {
+                    deliver(outcome, at, player);
+                }
+            }, 3L);
             return;
         }
 
-        ItemStack result = switch (category) {
-            case JUNK -> junkLoot.resolve(hookId, loc, random);
-            case TREASURE -> treasureLoot.resolve(loc, random);
-            case MINERAL -> mineralLoot.resolve(lineId, loc, random);
-            case FISH -> throw new IllegalStateException("handled above");
-        };
-
-        caughtItem.setItemStack(result);
+        if (outcome instanceof CaughtResult.AsMob asMob) {
+            caughtItem.remove();
+            spawnAndFling(asMob.type(), loc, player);
+        } else if (outcome instanceof CaughtResult.AsItem asItem) {
+            caughtItem.setItemStack(asItem.stack());
+        }
     }
 
-    /** anchor_hook + fiber_line's squid/dolphin/glow_squid/frog catches: spawn the real mob and toss it at the player. */
+    private CaughtResult resolveOutcome(String hookId, String lineId, FishHook hook, ItemStack rod, Location loc) {
+        Category category = resolveCategory(hookId, hook, rod, loc);
+        return switch (category) {
+            case FISH -> fishLoot.resolve(lineId, hookId, loc, random);
+            case JUNK -> CaughtResult.item(junkLoot.resolve(hookId, loc, random));
+            case TREASURE -> CaughtResult.item(treasureLoot.resolve(loc, random));
+            case MINERAL -> CaughtResult.item(mineralLoot.resolve(lineId, loc, random));
+        };
+    }
+
+    private void deliver(CaughtResult result, Location loc, Player player) {
+        World world = loc.getWorld();
+        if (world == null) {
+            return;
+        }
+        if (result instanceof CaughtResult.AsMob asMob) {
+            spawnAndFling(asMob.type(), loc, player);
+        } else if (result instanceof CaughtResult.AsItem asItem) {
+            Item drop = world.dropItem(loc, asItem.stack());
+            Vector d = player.getLocation().toVector().subtract(loc.toVector());
+            drop.setVelocity(new Vector(d.getX() * 0.1, d.getY() * 0.1 + Math.sqrt(d.length()) * 0.08, d.getZ() * 0.1));
+        }
+    }
+
     private void spawnAndFling(EntityType type, Location loc, Player player) {
         World world = loc.getWorld();
         if (world == null) {
@@ -137,7 +147,6 @@ public final class FishingLootResolver implements Listener {
         return result != null ? result : Category.JUNK;
     }
 
-    /** Vanilla loot-quality formula: effective weight = max(weight + quality * luck, 0). */
     private int scale(int weight, int quality, int luck) {
         return Math.max(0, weight + quality * luck);
     }

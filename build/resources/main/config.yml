@@ -1,3 +1,36 @@
 pyrofishing-integration:
   enabled: true
-  anchor-hook-chance: 0.25
+  anchor-hook-chance: 0.25              # live-fish bonus; only used when replace-catch is false
+  replace-catch-on-anchor-hook: true    # remove Pyro's reward on anchor_hook rods (Reel Deal loot only)
+  debug: false                          # log how Pyro's reward was removed
+
+rod-add-lore:
+  mode: full
+  summary:
+    line-label: "Line"
+    hook-label: "Hook"
+    color: "dark_aqua"
+
+hooked-fish:                    # anchor_hook + Pyro: the caught fish is a 3D model flung at the player
+  enabled: true
+  despawn-seconds: 60           # removed if nobody kills it
+  health: 4.0                   # hits needed to "kill" it
+  hitbox-mob: TURTLE            # invisible mob used as hitbox (wide and flat like a fish; peaceful-safe)
+  hitbox-scale: 0.7             # scales the hitbox (turtle base is 1.2 wide x 0.4 tall)
+  hitbox-y-offset: 0.3          # mob height above the hook when spawned
+  display-y-offset: 0.0         # extra model lift; the model already sits on the mob's feet
+  model-scale: 0.8
+  fling-speed: 1.1
+  yaw-offset: 0.0               # rotate the model if it faces the wrong way
+  pickup-shows-model: true      # shift + right-click (empty hand) picks the fish up as the 3D model item
+  size:                         # random size: bigger = rarer. Length is shown in cm on the item.
+    enabled: true
+    min-scale: 0.25             # scale at the smallest length (tiny min-cm)
+    max-scale: 5.0              # scale at the largest length (trophy max-cm)
+    trophy-skew: 2.0            # higher = huge trophies rarer inside the trophy tier
+    tiers:                      # weight = relative chance of rolling that tier
+      tiny:    {min-cm: 3,   max-cm: 8,   weight: 25}
+      small:   {min-cm: 10,  max-cm: 25,  weight: 35}
+      medium:  {min-cm: 28,  max-cm: 61,  weight: 28}
+      large:   {min-cm: 64,  max-cm: 102, weight: 10}
+      trophy:  {min-cm: 104, max-cm: 150, weight: 2}

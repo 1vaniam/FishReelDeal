@@ -2,37 +2,31 @@ package dev.reeldeal.item;
 
 import dev.reeldeal.ReelKeys;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
-/**
- * Ports the ~15 {@code data/reel/recipe/<line>/<hook>.json} recipes. Those
- * were all one-off static results; here a rod is built parametrically from
- * whichever line + hook were used, so this replaces all of them at once
- * (and works for every line/hook combo the item registry knows about, not
- * just the ones the original pack had recipe files for).
- */
 public final class FishingRodFactory {
 
     private static final Component FOOTER =
             net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection()
                     .deserialize("§r§9Reel Deal");
 
+    private final Plugin plugin;
     private final ItemRegistry items;
 
-    public FishingRodFactory(ItemRegistry items) {
+    public FishingRodFactory(Plugin plugin, ItemRegistry items) {
+        this.plugin = plugin;
         this.items = items;
     }
 
-    /**
-     * @param lineId reel item id, e.g. "fiber_line" (without the "reel:" prefix)
-     * @param hookId reel item id, e.g. "wooden_hook"
-     */
     public ItemStack construct(String lineId, String hookId) {
         ItemStack rod = new ItemStack(Material.FISHING_ROD);
         ItemMeta meta = rod.getItemMeta();
@@ -43,22 +37,81 @@ public final class FishingRodFactory {
         pdc.set(ReelKeys.CONSTRUCTED, PersistentDataType.BOOLEAN, true);
         pdc.set(ReelKeys.LINE, PersistentDataType.STRING, "reel:" + lineId);
         pdc.set(ReelKeys.HOOK, PersistentDataType.STRING, "reel:" + hookId);
+        pdc.set(ReelKeys.NATIVE, PersistentDataType.BOOLEAN, true);
 
-        // custom_model_data.strings -> CustomModelDataComponent#setStrings (confirmed against
-        // the 26.x javadocs: getCustomModelDataComponent/setStrings/setCustomModelDataComponent).
         applyCustomModelDataStrings(meta, List.of("reel:" + lineId, "reel:" + hookId));
 
         rod.setItemMeta(meta);
         return rod;
     }
 
-    /** Is this stack a constructed reel rod, i.e. did the fiber_line/wooden_hook-style recipe fire on it? */
     public boolean isConstructed(ItemStack stack) {
         if (stack == null || stack.getType() != Material.FISHING_ROD || !stack.hasItemMeta()) {
             return false;
         }
         var pdc = stack.getItemMeta().getPersistentDataContainer();
         return Boolean.TRUE.equals(pdc.get(ReelKeys.CONSTRUCTED, PersistentDataType.BOOLEAN));
+    }
+
+    public ItemStack applyLineAndHook(ItemStack existingRod, String lineId, String hookId) {
+        ItemStack rod = existingRod.clone();
+        ItemMeta meta = rod.getItemMeta();
+        var pdc = meta.getPersistentDataContainer();
+
+        boolean nativeRod = Boolean.TRUE.equals(pdc.get(ReelKeys.NATIVE, PersistentDataType.BOOLEAN))
+                || (Boolean.TRUE.equals(pdc.get(ReelKeys.CONSTRUCTED, PersistentDataType.BOOLEAN))
+                && !pdc.has(ReelKeys.APPENDED_LORE_LINES, PersistentDataType.INTEGER));
+        if (nativeRod) {
+            meta.lore(buildLore(lineId, hookId));
+            pdc.set(ReelKeys.CONSTRUCTED, PersistentDataType.BOOLEAN, true);
+            pdc.set(ReelKeys.LINE, PersistentDataType.STRING, "reel:" + lineId);
+            pdc.set(ReelKeys.HOOK, PersistentDataType.STRING, "reel:" + hookId);
+            pdc.set(ReelKeys.NATIVE, PersistentDataType.BOOLEAN, true);
+            applyCustomModelDataStrings(meta, List.of("reel:" + lineId, "reel:" + hookId));
+            rod.setItemMeta(meta);
+            return rod;
+        }
+
+        List<Component> lore = meta.hasLore() ? new ArrayList<>(meta.lore()) : new ArrayList<>();
+        int previouslyAppended = pdc.getOrDefault(ReelKeys.APPENDED_LORE_LINES, PersistentDataType.INTEGER, 0);
+        if (previouslyAppended > 0 && previouslyAppended <= lore.size()) {
+            lore.subList(lore.size() - previouslyAppended, lore.size()).clear();
+        }
+
+        List<Component> appended = resolveAddLore(lineId, hookId);
+        lore.addAll(appended);
+        meta.lore(lore);
+
+        pdc.set(ReelKeys.CONSTRUCTED, PersistentDataType.BOOLEAN, true);
+        pdc.set(ReelKeys.LINE, PersistentDataType.STRING, "reel:" + lineId);
+        pdc.set(ReelKeys.HOOK, PersistentDataType.STRING, "reel:" + hookId);
+        pdc.set(ReelKeys.APPENDED_LORE_LINES, PersistentDataType.INTEGER, appended.size());
+
+        rod.setItemMeta(meta);
+        return rod;
+    }
+
+    private List<Component> resolveAddLore(String lineId, String hookId) {
+        String mode = plugin.getConfig().getString("rod-add-lore.mode", "full").toLowerCase(Locale.ROOT);
+        return switch (mode) {
+            case "none" -> List.of();
+            case "summary" -> summaryLore(lineId, hookId);
+            default -> buildLore(lineId, hookId);
+        };
+    }
+
+    private List<Component> summaryLore(String lineId, String hookId) {
+        String lineLabel = plugin.getConfig().getString("rod-add-lore.summary.line-label", "Line");
+        String hookLabel = plugin.getConfig().getString("rod-add-lore.summary.hook-label", "Hook");
+        String colorName = plugin.getConfig().getString("rod-add-lore.summary.color", "dark_aqua");
+        NamedTextColor color = NamedTextColor.NAMES.value(colorName.toLowerCase(Locale.ROOT));
+        if (color == null) {
+            color = NamedTextColor.DARK_AQUA;
+        }
+        return List.of(
+                Component.empty(),
+                Component.text(lineLabel + ": ", color).append(items.appliedNameHeader(lineId)),
+                Component.text(hookLabel + ": ", color).append(items.appliedNameHeader(hookId)));
     }
 
     public String lineOf(ItemStack rod) {
