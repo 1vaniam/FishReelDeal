@@ -34,47 +34,64 @@ public final class FishingLootResolver implements Listener {
     private final MineralLoot mineralLoot;
     private final FishLoot fishLoot;
     private final TreasureLoot treasureLoot;
+    private final BarrelCatchManager barrels;
     private final Random random = new Random();
 
-    public FishingLootResolver(Plugin plugin, ItemRegistry items, FishingRodFactory rods) {
+    public FishingLootResolver(Plugin plugin, ItemRegistry items, FishingRodFactory rods, BarrelCatchManager barrels) {
         this.plugin = plugin;
         this.rods = rods;
+        this.barrels = barrels;
         this.junkLoot = new JunkLoot(items);
         this.mineralLoot = new MineralLoot();
         this.fishLoot = new FishLoot(items);
         this.treasureLoot = new TreasureLoot(items);
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = false)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onFish(PlayerFishEvent event) {
         if (event.getState() != PlayerFishEvent.State.CAUGHT_FISH) {
             return;
         }
         Player player = event.getPlayer();
         ItemStack rod = player.getInventory().getItemInMainHand();
-        if (!rods.isConstructed(rod)) {
-            return;
+        boolean reelRod = rods.isConstructed(rod);
+        if (plugin.getConfig().getBoolean("barrel-catch.debug", false)) {
+            plugin.getLogger().info("Fishing catch event: cancelled=" + event.isCancelled()
+                    + ", reelRod=" + reelRod + ", caught="
+                    + (event.getCaught() == null ? "null" : event.getCaught().getType()) + ".");
         }
-        if (event.isCancelled()) {
-            event.setCancelled(false);
+        String hookId = reelRod ? strip(rods.hookOf(rod)) : null;
+        FishHook hook = event.getHook();
+        Location loc = hook.getLocation();
+        if (barrels.shouldCatch(hookId, random) && barrels.spawn(player, loc)) {
+            if (event.getCaught() instanceof Item caughtItem) {
+                caughtItem.remove();
+            }
+            PyroFishingIntegration.markBarrelCatch(player.getUniqueId(), System.currentTimeMillis());
+            return;
         }
         if (!(event.getCaught() instanceof Item caughtItem)) {
             return;
         }
+        if (!reelRod) {
+            return;
+        }
 
-        String hookId = strip(rods.hookOf(rod));
         String lineId = strip(rods.lineOf(rod));
-        FishHook hook = event.getHook();
-        Location loc = hook.getLocation();
 
         CaughtResult outcome = resolveOutcome(hookId, lineId, hook, rod, loc);
+        if (plugin.getConfig().getBoolean("fishing.debug", false)) {
+            plugin.getLogger().info("Fishing result: player=" + player.getName() + ", hook=" + hookId
+                    + ", line=" + lineId + ", resolved=" + outcome.getClass().getSimpleName() + ", pyroReplacement="
+                    + PyroFishingIntegration.replacingPyroCatches() + ".");
+        }
 
-        if ("anchor_hook".equals(hookId) && PyroFishingIntegration.replacingAnchorCatches()) {
+        if (PyroFishingIntegration.replacingPyroCatches()) {
             caughtItem.remove();
-            long started = System.currentTimeMillis();
+            long startedNanos = System.nanoTime();
             Location at = loc.clone();
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                if (!PyroFishingIntegration.caughtSince(player.getUniqueId(), started - 250)) {
+                if (!PyroFishingIntegration.consumeCatchMarker(player.getUniqueId(), startedNanos)) {
                     deliver(outcome, at, player);
                 }
             }, 3L);
@@ -91,6 +108,10 @@ public final class FishingLootResolver implements Listener {
 
     private CaughtResult resolveOutcome(String hookId, String lineId, FishHook hook, ItemStack rod, Location loc) {
         Category category = resolveCategory(hookId, hook, rod, loc);
+        if (plugin.getConfig().getBoolean("fishing.debug", false)) {
+            plugin.getLogger().info("Fishing category decision: hook=" + hookId + ", line=" + lineId
+                    + ", openWater=" + hook.isInOpenWater() + ", category=" + category + ".");
+        }
         return switch (category) {
             case FISH -> fishLoot.resolve(lineId, hookId, loc, random);
             case JUNK -> CaughtResult.item(junkLoot.resolve(hookId, loc, random));
@@ -129,22 +150,33 @@ public final class FishingLootResolver implements Listener {
     }
 
     private Category resolveCategory(String hookId, FishHook hook, ItemStack rod, Location loc) {
-        if ("wooden_hook".equals(hookId)) {
-            return Category.JUNK;
-        }
-        boolean lucky = "golden_hook".equals(hookId);
         int luck = luckOfTheSeaLevel(rod);
 
         boolean openWater = hook.isInOpenWater();
-        boolean mineralEligible = "cluster_hook".equals(hookId) && loc.getBlockY() <= 48;
+        String hookPath = "fishing.category-weights.hooks." + (hookId == null ? "normal" : hookId) + ".";
+        int junkWeight = configuredCategoryWeight(hookPath + "junk", "default.junk", 10);
+        int treasureWeight = configuredCategoryWeight(hookPath + "treasure", "default.treasure", 5);
+        int fishWeight = configuredCategoryWeight(hookPath + "fish", "default.fish", 85);
+        boolean mineralEligible = "cluster_hook".equals(hookId)
+                && loc.getBlockY() <= plugin.getConfig().getInt(hookPath + "underground-max-y", 48);
 
         WeightedPool<Category> pool = new WeightedPool<>();
-        pool.add(Category.JUNK, scale(lucky ? 5 : 10, -2, luck));
-        pool.add(Category.TREASURE, scale(lucky ? 10 : 5, 2, luck), openWater);
-        pool.add(mineralEligible ? Category.MINERAL : Category.FISH, scale(85, -1, luck));
+        pool.add(Category.JUNK, scale(junkWeight, -2, luck));
+        pool.add(Category.TREASURE, scale(treasureWeight, 2, luck), openWater);
+        if (mineralEligible) {
+            int mineralWeight = plugin.getConfig().getInt(hookPath + "underground-mineral-weight", fishWeight);
+            pool.add(Category.MINERAL, scale(mineralWeight, -1, luck));
+        } else {
+            pool.add(Category.FISH, scale(fishWeight, -1, luck));
+        }
 
         Category result = pool.pick(random);
         return result != null ? result : Category.JUNK;
+    }
+
+    private int configuredCategoryWeight(String hookPath, String defaultKey, int fallback) {
+        int defaultWeight = plugin.getConfig().getInt("fishing.category-weights." + defaultKey, fallback);
+        return Math.max(0, plugin.getConfig().getInt(hookPath, defaultWeight));
     }
 
     private int scale(int weight, int quality, int luck) {

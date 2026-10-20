@@ -2,6 +2,9 @@ package dev.reeldeal;
 
 import dev.reeldeal.command.ReelCommand;
 import dev.reeldeal.fishing.FishingLootResolver;
+import dev.reeldeal.fishing.BarrelCatchManager;
+import dev.reeldeal.fishing.CatchRecords;
+import dev.reeldeal.fishing.DisplayFollowTicker;
 import dev.reeldeal.fishing.HookedFishManager;
 import dev.reeldeal.integration.PyroFishingIntegration;
 import dev.reeldeal.item.FishingRodFactory;
@@ -15,6 +18,9 @@ public final class ReelDealPlugin extends JavaPlugin {
     private ItemRegistry itemRegistry;
     private FishingRodFactory rodFactory;
     private HookedFishManager hookedFish;
+    private BarrelCatchManager barrelCatches;
+    private CatchRecords catchRecords;
+    private DisplayFollowTicker displayTicker;
 
     @Override
     public void onEnable() {
@@ -22,22 +28,31 @@ public final class ReelDealPlugin extends JavaPlugin {
 
         this.itemRegistry = new ItemRegistry(this);
         this.rodFactory = new FishingRodFactory(this, itemRegistry);
+        this.catchRecords = new CatchRecords(this);
         reload();
 
-        getServer().getPluginManager().registerEvents(new ReelItemGuard(), this);
-        getServer().getPluginManager().registerEvents(new FishingLootResolver(this, itemRegistry, rodFactory), this);
+        getServer().getPluginManager().registerEvents(new ReelItemGuard(itemRegistry), this);
+        this.displayTicker = new DisplayFollowTicker(this);
+        this.barrelCatches = new BarrelCatchManager(this, displayTicker);
+        getServer().getPluginManager().registerEvents(barrelCatches, this);
+        getServer().getPluginManager().registerEvents(new FishingLootResolver(this, itemRegistry, rodFactory, barrelCatches), this);
 
-        this.hookedFish = new HookedFishManager(this);
+        this.hookedFish = new HookedFishManager(this, displayTicker, catchRecords);
         getServer().getPluginManager().registerEvents(hookedFish, this);
 
         boolean pyroEnabled = getConfig().getBoolean("pyrofishing-integration.enabled", true);
         double pyroChance = getConfig().getDouble("pyrofishing-integration.anchor-hook-chance", 0.25);
-        boolean pyroReplace = getConfig().getBoolean("pyrofishing-integration.replace-catch-on-anchor-hook", true);
+        String replaceModelsPath = "pyrofishing-integration.replace-pyro-catch-with-model";
+        boolean pyroReplace = getConfig().isSet(replaceModelsPath)
+                ? getConfig().getBoolean(replaceModelsPath)
+                : getConfig().getBoolean("pyrofishing-integration.replace-catch-on-anchor-hook", true);
         boolean pyroDebug = getConfig().getBoolean("pyrofishing-integration.debug", false);
         PyroFishingIntegration.tryRegister(this, rodFactory, pyroEnabled, pyroChance, pyroReplace, pyroDebug, hookedFish);
 
-        ReelCommand reelCommand = new ReelCommand(itemRegistry, rodFactory, this::reload);
+        ReelCommand reelCommand = new ReelCommand(itemRegistry, rodFactory, this::reload, catchRecords,
+                hookedFish, barrelCatches);
         registerCommand("reel", "ReelDeal admin/debug commands", java.util.List.of(), reelCommand);
+        getServer().getScheduler().runTaskTimer(this, catchRecords::saveAsync, 1200L, 1200L);
 
         getServer().getPluginManager().addPermission(new org.bukkit.permissions.Permission(
                 ReelCommand.PERMISSION,
@@ -48,8 +63,17 @@ public final class ReelDealPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (catchRecords != null) {
+            catchRecords.saveNow();
+        }
+        if (barrelCatches != null) {
+            barrelCatches.clear();
+        }
         if (hookedFish != null) {
             hookedFish.clear();
+        }
+        if (displayTicker != null) {
+            displayTicker.clear();
         }
     }
 

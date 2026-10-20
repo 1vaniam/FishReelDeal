@@ -33,7 +33,6 @@ public final class RecipeRegistrar {
             "woven_line_h", "woven_line_v", "reinforced_line", "fiber_line_h", "fiber_line_v", "iron_hook");
 
     public void registerAll() {
-        Bukkit.removeRecipe(NamespacedKey.minecraft("fishing_rod"));
         removeManagedRecipes();
 
         registerLineRecipes();

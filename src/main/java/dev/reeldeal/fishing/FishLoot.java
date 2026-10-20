@@ -19,14 +19,19 @@ public final class FishLoot {
 
     public CaughtResult resolve(String lineId, String hookId, Location catchLocation, Random random) {
         boolean anchor = "anchor_hook".equals(hookId);
+        // Special hooks are usable starting with woven line. Better lines keep their own
+        // benefits, while the anchor's live-catch effect is independent of the line tier.
+        if (anchor) {
+            return anchorCatchTable(lineId, catchLocation, random);
+        }
         return switch (lineId) {
-            case "fiber_line" -> anchor ? anchorFiber(catchLocation, random) : defaultFiber(catchLocation, random);
+            case "fiber_line" -> defaultFiber(catchLocation, random);
             case "reinforced_line" -> defaultCommon(random);
             default -> defaultWoven(random);
         };
     }
 
-    private CaughtResult anchorFiber(Location loc, Random random) {
+    private CaughtResult anchorCatchTable(String lineId, Location loc, Random random) {
         Biome biome = loc.getBlock().getBiome();
         boolean anyOcean = ReelBiomes.JUNK_OCEAN.contains(biome) || ReelBiomes.JUNK_WARM_OCEAN.contains(biome);
 
@@ -39,6 +44,12 @@ public final class FishLoot {
         pool.add(CaughtResult.mob(EntityType.DOLPHIN), 20, anyOcean);
         pool.add(CaughtResult.mob(EntityType.GLOW_SQUID), 20, loc.getBlockY() <= 32);
         pool.add(CaughtResult.mob(EntityType.FROG), 20, ReelBiomes.PERMITS_FROGS.contains(biome));
+        if ("fiber_line".equals(lineId)) {
+            ItemStack special = resolveSpecialFish(loc);
+            if (special != null) {
+                pool.add(CaughtResult.item(special), 1);
+            }
+        }
 
         CaughtResult result = pool.pick(random);
         return result != null ? result : CaughtResult.item(new ItemStack(Material.COD));

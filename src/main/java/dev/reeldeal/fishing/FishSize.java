@@ -27,6 +27,49 @@ public record FishSize(int tier, int lengthCm, double scale) {
     private static final int[] DEFAULT_WEIGHT = {25, 35, 28, 10, 2};
     private static final int[] STEP_MAX = {8, 15, 25, 38, 52, 68, 85, 104, 125, Integer.MAX_VALUE};
 
+    /** Parsed once on startup/reload so catches don't repeatedly read configuration paths. */
+    public static final class Settings {
+        private final boolean enabled;
+        private final int[] minCm;
+        private final int[] maxCm;
+        private final double[] weights;
+        private final int anchorTierShift;
+        private final double trophySkew;
+        private final double minScale;
+        private final double maxScale;
+
+        private Settings(boolean enabled, int[] minCm, int[] maxCm, double[] weights,
+                         int anchorTierShift, double trophySkew, double minScale, double maxScale) {
+            this.enabled = enabled;
+            this.minCm = minCm;
+            this.maxCm = maxCm;
+            this.weights = weights;
+            this.anchorTierShift = anchorTierShift;
+            this.trophySkew = trophySkew;
+            this.minScale = minScale;
+            this.maxScale = maxScale;
+        }
+
+        public static Settings from(ConfigurationSection cfg) {
+            int[] min = new int[5];
+            int[] max = new int[5];
+            double[] weight = new double[5];
+            if (cfg == null) {
+                return new Settings(false, min, max, weight, 0, 2.0, 0.25, 5.0);
+            }
+            for (int i = 0; i < KEYS.length; i++) {
+                String path = "tiers." + KEYS[i] + ".";
+                min[i] = cfg.getInt(path + "min-cm", DEFAULT_CM[i][0]);
+                max[i] = Math.max(min[i], cfg.getInt(path + "max-cm", DEFAULT_CM[i][1]));
+                weight[i] = Math.max(0, cfg.getDouble(path + "weight", DEFAULT_WEIGHT[i]));
+            }
+            return new Settings(cfg.getBoolean("enabled", true), min, max, weight,
+                    Math.max(0, cfg.getInt("anchor-tier-shift", 1)),
+                    Math.max(1.0, cfg.getDouble("trophy-skew", 2.0)),
+                    cfg.getDouble("min-scale", 0.25), cfg.getDouble("max-scale", 5.0));
+        }
+    }
+
     public static int step(int lengthCm) {
         for (int i = 0; i < STEP_MAX.length; i++) {
             if (lengthCm <= STEP_MAX[i]) {
@@ -37,42 +80,44 @@ public record FishSize(int tier, int lengthCm, double scale) {
     }
 
     public static FishSize roll(ConfigurationSection cfg, Random random) {
-        if (cfg == null || !cfg.getBoolean("enabled", true)) {
+        return roll(cfg, random, false);
+    }
+
+    public static FishSize roll(ConfigurationSection cfg, Random random, boolean anchorHook) {
+        return roll(Settings.from(cfg), random, anchorHook);
+    }
+
+    public static FishSize roll(Settings cfg, Random random, boolean anchorHook) {
+        if (cfg == null || !cfg.enabled) {
             return null;
         }
-        int[] min = new int[5];
-        int[] max = new int[5];
-        double[] weight = new double[5];
         double total = 0;
-        for (int i = 0; i < 5; i++) {
-            String p = "tiers." + KEYS[i] + ".";
-            min[i] = cfg.getInt(p + "min-cm", DEFAULT_CM[i][0]);
-            max[i] = Math.max(min[i], cfg.getInt(p + "max-cm", DEFAULT_CM[i][1]));
-            weight[i] = Math.max(0, cfg.getDouble(p + "weight", DEFAULT_WEIGHT[i]));
-            total += weight[i];
+        for (double weight : cfg.weights) {
+            total += weight;
         }
         int tier = 2;
         if (total > 0) {
             double r = random.nextDouble() * total;
             for (int i = 0; i < 5; i++) {
-                r -= weight[i];
+                r -= cfg.weights[i];
                 if (r < 0) {
                     tier = i;
                     break;
                 }
             }
         }
+        if (anchorHook) {
+            tier = Math.min(KEYS.length - 1, tier + cfg.anchorTierShift);
+        }
         double t = random.nextDouble();
         if (tier == 4) {
-            t = Math.pow(t, Math.max(1.0, cfg.getDouble("trophy-skew", 2.0))); // biggest are rarest
+            t = Math.pow(t, cfg.trophySkew); // biggest are rarest
         }
-        int cm = (int) Math.round(min[tier] + t * (max[tier] - min[tier]));
+        int cm = (int) Math.round(cfg.minCm[tier] + t * (cfg.maxCm[tier] - cfg.minCm[tier]));
 
-        double lo = min[0];
-        double hi = Math.max(lo + 1, max[4]);
-        double minScale = cfg.getDouble("min-scale", 0.25);
-        double maxScale = cfg.getDouble("max-scale", 5.0);
-        double scale = minScale + (cm - lo) / (hi - lo) * (maxScale - minScale);
+        double lo = cfg.minCm[0];
+        double hi = Math.max(lo + 1, cfg.maxCm[4]);
+        double scale = cfg.minScale + (cm - lo) / (hi - lo) * (cfg.maxScale - cfg.minScale);
         return new FishSize(tier, cm, Math.max(0.05, scale));
     }
 

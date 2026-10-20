@@ -92,6 +92,11 @@ public final class ItemRegistry {
         return definition(id).category();
     }
 
+    public boolean isConsumable(String id) {
+        ItemDefinition def = definitions.get(id);
+        return def != null && def.consumable() != null;
+    }
+
     public java.util.List<Component> ownLoreBody(String id) {
         ItemDefinition def = definition(id);
         JsonArray lore = def.loreJson();

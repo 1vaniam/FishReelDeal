@@ -1,8 +1,89 @@
 pyrofishing-integration:
   enabled: true
   anchor-hook-chance: 0.25              # live-fish bonus; only used when replace-catch is false
-  replace-catch-on-anchor-hook: true    # remove Pyro's reward on anchor_hook rods (Reel Deal loot only)
+  replace-pyro-catch-with-model: true   # replace Pyro's reward with a hooked-fish model on ReelDeal rods
   debug: false                          # log how Pyro's reward was removed
+
+fishing:
+  debug: false                          # log selected catch category and resolved result
+  category-weights:
+    default:                            # relative weights for standard fishing
+      junk: 10
+      treasure: 5
+      fish: 85
+    hooks:
+      wooden_hook:                      # preserves its junk-only behavior by default
+        junk: 100
+        treasure: 0
+        fish: 0
+      golden_hook:                      # halves junk weight and doubles treasure weight
+        junk: 5
+        treasure: 10
+        fish: 85
+      cluster_hook:
+        underground-max-y: 48
+        underground-mineral-weight: 85
+
+barrel-catch:
+  enabled: true
+  base-chance: 0.01                     # 1% before the selected hook's multiplier
+  hits-to-open: 5                        # player attacks the flying barrel entity this many times
+  drowned-chance: 10.0                   # percent chance a Drowned emerges when a barrel opens; 0-100
+  loot-table:                           # each opened barrel rolls one weighted entry
+    - material: STRING
+      weight: 18
+      min-amount: 2
+      max-amount: 6
+    - material: COOKED_COD
+      weight: 14
+      min-amount: 1
+      max-amount: 3
+    - material: COAL
+      weight: 14
+      min-amount: 2
+      max-amount: 6
+    - material: IRON_INGOT
+      weight: 14
+      min-amount: 1
+      max-amount: 3
+    - material: PRISMARINE_SHARD
+      weight: 12
+      min-amount: 2
+      max-amount: 6
+    - material: LAPIS_LAZULI
+      weight: 10
+      min-amount: 3
+      max-amount: 8
+    - material: GOLD_INGOT
+      weight: 8
+      min-amount: 1
+      max-amount: 2
+    - material: NAUTILUS_SHELL
+      weight: 4
+      min-amount: 1
+      max-amount: 1
+    - material: EMERALD
+      weight: 4
+      min-amount: 1
+      max-amount: 1
+    - material: DIAMOND
+      weight: 2
+      min-amount: 1
+      max-amount: 1
+  placeholder-loot: CHEST               # fallback if the loot table is empty or invalid
+  hitbox-mob: TURTLE                    # invisible hitbox; the visible model is a vanilla barrel
+  hitbox-scale: 0.8
+  model-scale: 0.8
+  fling-speed: 1.1
+  despawn-seconds: 45
+  debug: false                          # log every barrel chance roll and catch-event status
+  hook-multipliers:
+    normal: 1.0
+    wooden_hook: 1.0
+    iron_hook: 1.0
+    golden_hook: 2.0                    # golden hooks favor treasure-like catches
+    cluster_hook: 1.0
+    anchor_hook: 1.0
 
 rod-add-lore:
   mode: full
@@ -11,9 +92,10 @@ rod-add-lore:
     hook-label: "Hook"
     color: "dark_aqua"
 
-hooked-fish:                    # anchor_hook + Pyro: the caught fish is a 3D model flung at the player
+hooked-fish:                    # supported Pyro catches become 3D models flung at the player
   enabled: true
   despawn-seconds: 60           # removed if nobody kills it
+  despawn-message: "Your fish flopped back to the water!" # empty string disables the timeout message
   health: 4.0                   # hits needed to "kill" it
   hitbox-mob: TURTLE            # invisible mob used as hitbox (wide and flat like a fish; peaceful-safe)
   hitbox-scale: 0.7             # scales the hitbox (turtle base is 1.2 wide x 0.4 tall)
@@ -28,6 +110,7 @@ hooked-fish:                    # anchor_hook + Pyro: the caught fish is a 3D mo
     min-scale: 0.25             # scale at the smallest length (tiny min-cm)
     max-scale: 5.0              # scale at the largest length (trophy max-cm)
     trophy-skew: 2.0            # higher = huge trophies rarer inside the trophy tier
+    anchor-tier-shift: 1        # anchor_hook shifts the rolled fish up this many size tiers
     tiers:                      # weight = relative chance of rolling that tier
       tiny:    {min-cm: 3,   max-cm: 8,   weight: 25}
       small:   {min-cm: 10,  max-cm: 25,  weight: 35}

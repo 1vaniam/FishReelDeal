@@ -3,6 +3,9 @@ package dev.reeldeal.command;
 import dev.reeldeal.item.FishingRodFactory;
 import dev.reeldeal.item.ItemRegistry;
 import dev.reeldeal.recipe.RecipeRegistrar;
+import dev.reeldeal.fishing.CatchRecords;
+import dev.reeldeal.fishing.BarrelCatchManager;
+import dev.reeldeal.fishing.HookedFishManager;
 import io.papermc.paper.command.brigadier.BasicCommand;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import net.kyori.adventure.text.Component;
@@ -26,11 +29,18 @@ public final class ReelCommand implements BasicCommand {
     private final ItemRegistry items;
     private final FishingRodFactory rods;
     private final Runnable reloadAction;
+    private final CatchRecords catchRecords;
+    private final HookedFishManager hookedFish;
+    private final BarrelCatchManager barrels;
 
-    public ReelCommand(ItemRegistry items, FishingRodFactory rods, Runnable reloadAction) {
+    public ReelCommand(ItemRegistry items, FishingRodFactory rods, Runnable reloadAction, CatchRecords catchRecords,
+                       HookedFishManager hookedFish, BarrelCatchManager barrels) {
         this.items = items;
         this.rods = rods;
         this.reloadAction = reloadAction;
+        this.catchRecords = catchRecords;
+        this.hookedFish = hookedFish;
+        this.barrels = barrels;
     }
 
     @Override
@@ -43,16 +53,147 @@ public final class ReelCommand implements BasicCommand {
         }
 
         switch (args[0].toLowerCase(Locale.ROOT)) {
-            case "give" -> handleGive(sender, args);
-            case "add" -> handleAdd(sender, args);
-            case "reload" -> handleReload(sender);
+            case "stats" -> handleStats(sender, args);
+            case "leaderboard" -> handleLeaderboard(sender, args);
+            case "test" -> {
+                if (requireAdmin(sender)) handleTest(sender, args);
+            }
+            case "give" -> {
+                if (requireAdmin(sender)) handleGive(sender, args);
+            }
+            case "add" -> {
+                if (requireAdmin(sender)) handleAdd(sender, args);
+            }
+            case "reload" -> {
+                if (requireAdmin(sender)) handleReload(sender);
+            }
             default -> sendUsage(sender);
         }
     }
 
     @Override
     public String permission() {
-        return PERMISSION;
+        return null;
+    }
+
+    private boolean requireAdmin(CommandSender sender) {
+        if (sender.hasPermission(PERMISSION)) {
+            return true;
+        }
+        sender.sendMessage(Component.text("You don't have permission to use that command.", NamedTextColor.RED));
+        return false;
+    }
+
+    private void handleStats(CommandSender sender, String[] args) {
+        if (args.length > 2) {
+            sender.sendMessage(Component.text("Usage: /reel stats [player]", NamedTextColor.RED));
+            return;
+        }
+        Player target;
+        if (args.length == 2) {
+            target = Bukkit.getPlayerExact(args[1]);
+            if (target == null) {
+                sender.sendMessage(Component.text("Player '" + args[1] + "' isn't online.", NamedTextColor.RED));
+                return;
+            }
+            if (!target.equals(sender) && !sender.hasPermission(PERMISSION)) {
+                sender.sendMessage(Component.text("You can only view your own fishing record.", NamedTextColor.RED));
+                return;
+            }
+        } else if (sender instanceof Player player) {
+            target = player;
+        } else {
+            sender.sendMessage(Component.text("Console must specify an online player.", NamedTextColor.RED));
+            return;
+        }
+
+        CatchRecords.PlayerRecord record = catchRecords.get(target.getUniqueId());
+        sender.sendMessage(Component.text("3D fish record for " + target.getName(), NamedTextColor.GOLD));
+        sender.sendMessage(Component.text("Fish models caught: " + record.total(), NamedTextColor.YELLOW));
+        if (record.largestModel() == null) {
+            sender.sendMessage(Component.text("Largest fish: none recorded", NamedTextColor.GRAY));
+        } else {
+            sender.sendMessage(Component.text("Largest fish: " + displayModel(record.largestModel()) + " — "
+                    + record.largestLengthCm() + " cm", NamedTextColor.AQUA));
+        }
+        if (record.rarestModel() == null) {
+            sender.sendMessage(Component.text("Rarest size tier: none recorded", NamedTextColor.GRAY));
+        } else {
+            String[] tiers = {"Tiny", "Small", "Medium", "Large", "Trophy"};
+            String tier = record.rarestTier() >= 0 && record.rarestTier() < tiers.length
+                    ? tiers[record.rarestTier()] : "Unknown";
+            sender.sendMessage(Component.text("Rarest size tier: " + tier + " — "
+                    + displayModel(record.rarestModel()) + " (" + record.rarestLengthCm() + " cm)", NamedTextColor.LIGHT_PURPLE));
+        }
+    }
+
+    private String displayModel(String model) {
+        String[] words = model.replace('_', ' ').split(" ");
+        StringBuilder result = new StringBuilder();
+        for (String word : words) {
+            if (word.isEmpty()) continue;
+            if (result.length() > 0) result.append(' ');
+            result.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+        }
+        return result.toString();
+    }
+
+    private void handleLeaderboard(CommandSender sender, String[] args) {
+        if (args.length > 2) {
+            sender.sendMessage(Component.text("Usage: /reel leaderboard [largest|catches]", NamedTextColor.RED));
+            return;
+        }
+        String mode = args.length == 1 ? "largest" : args[1].toLowerCase(Locale.ROOT);
+        if (!mode.equals("largest") && !mode.equals("catches")) {
+            sender.sendMessage(Component.text("Choose 'largest' or 'catches'.", NamedTextColor.RED));
+            return;
+        }
+
+        List<CatchRecords.LeaderEntry> entries = mode.equals("largest")
+                ? catchRecords.topByLargest(10) : catchRecords.topByTotal(10);
+        sender.sendMessage(Component.text(mode.equals("largest")
+                ? "Top 3D fish by size" : "Top anglers by 3D fish catches", NamedTextColor.GOLD));
+        if (entries.isEmpty()) {
+            sender.sendMessage(Component.text("No fish records yet.", NamedTextColor.GRAY));
+            return;
+        }
+
+        int rank = 1;
+        for (CatchRecords.LeaderEntry entry : entries) {
+            String name = entry.playerName() == null || entry.playerName().isBlank()
+                    ? entry.playerId().toString().substring(0, 8) : entry.playerName();
+            String detail = mode.equals("largest")
+                    ? displayModel(entry.record().largestModel()) + " — " + entry.record().largestLengthCm() + " cm"
+                    : entry.record().total() + " catches";
+            sender.sendMessage(Component.text(rank++ + ". " + name + " — " + detail, NamedTextColor.YELLOW));
+        }
+    }
+
+    private void handleTest(CommandSender sender, String[] args) {
+        if (args.length != 2 || (!args[1].equalsIgnoreCase("fish") && !args[1].equalsIgnoreCase("barrel"))) {
+            sender.sendMessage(Component.text("Usage: /reel test <fish|barrel>", NamedTextColor.RED));
+            return;
+        }
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Run this command in-game so the test entity has a spawn location.",
+                    NamedTextColor.RED));
+            return;
+        }
+        if (args[1].equalsIgnoreCase("fish")) {
+            if (!hookedFish.spawnTest(player)) {
+                sender.sendMessage(Component.text("3D fish spawning is disabled or has no models loaded.",
+                        NamedTextColor.RED));
+                return;
+            }
+            sender.sendMessage(Component.text("Spawned a test 3D fish. It does not count toward your records.",
+                    NamedTextColor.GREEN));
+        } else if (barrels.spawnTest(player)) {
+            sender.sendMessage(Component.text("Spawned a test barrel. Open it by hitting it repeatedly.",
+                    NamedTextColor.GREEN));
+        } else {
+            sender.sendMessage(Component.text("Couldn't spawn the test barrel; check the server log.",
+                    NamedTextColor.RED));
+        }
     }
 
     private void handleGive(CommandSender sender, String[] args) {
@@ -196,12 +337,20 @@ public final class ReelCommand implements BasicCommand {
     }
 
     private void give(CommandSender sender, Player target, ItemStack stack, String description) {
-        target.getInventory().addItem(stack);
-        sender.sendMessage(Component.text("Gave " + target.getName() + " " + description + ".", NamedTextColor.GREEN));
+        var leftovers = target.getInventory().addItem(stack);
+        for (ItemStack leftover : leftovers.values()) {
+            target.getWorld().dropItemNaturally(target.getLocation(), leftover);
+        }
+        sender.sendMessage(Component.text("Gave " + target.getName() + " " + description
+                + (leftovers.isEmpty() ? "." : "; inventory was full, so the item dropped nearby."),
+                leftovers.isEmpty() ? NamedTextColor.GREEN : NamedTextColor.YELLOW));
     }
 
     private void sendUsage(CommandSender sender) {
         sender.sendMessage(Component.text("Usage:", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  /reel stats [player]", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  /reel leaderboard [largest|catches]", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  /reel test <fish|barrel>", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel give <item> [player]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel give rod <line> <hook> [player]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel add <line|hook> <item>", NamedTextColor.YELLOW));
@@ -210,9 +359,20 @@ public final class ReelCommand implements BasicCommand {
 
     @Override
     public Collection<String> suggest(CommandSourceStack source, String[] args) {
+        CommandSender sender = source.getSender();
+        if (args.length > 0 && !source.getSender().hasPermission(PERMISSION)
+                && !args[0].equalsIgnoreCase("stats")
+                && !args[0].equalsIgnoreCase("leaderboard")) {
+            return List.of();
+        }
         List<String> options = switch (args.length) {
-            case 1 -> List.of("give", "add", "reload");
-            case 2 -> args[0].equalsIgnoreCase("give") ? concat(items.ids(), List.of("rod"))
+            case 1 -> sender.hasPermission(PERMISSION)
+                    ? List.of("stats", "leaderboard", "test", "give", "add", "reload") : List.of("stats", "leaderboard");
+            case 2 -> args[0].equalsIgnoreCase("stats") ? onlinePlayerNames()
+                    : args[0].equalsIgnoreCase("leaderboard") ? List.of("largest", "catches")
+                    : !sender.hasPermission(PERMISSION) ? List.of()
+                    : args[0].equalsIgnoreCase("test") ? List.of("fish", "barrel")
+                    : args[0].equalsIgnoreCase("give") ? concat(items.ids(), List.of("rod"))
                     : args[0].equalsIgnoreCase("add") ? List.of("line", "hook")
                     : List.of();
             case 3 -> args[0].equalsIgnoreCase("give") && args[1].equalsIgnoreCase("rod") ? RecipeRegistrar.LINES

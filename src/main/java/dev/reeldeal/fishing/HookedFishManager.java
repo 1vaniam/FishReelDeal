@@ -17,10 +17,13 @@ import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -30,7 +33,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 import org.joml.Matrix4f;
@@ -52,26 +54,33 @@ public final class HookedFishManager implements Listener {
 
     private static final NamespacedKey FISH_KEY = new NamespacedKey("reel", "hooked_fish");
     private static final NamespacedKey MODEL_KEY = new NamespacedKey("reel", "hooked_model");
+    private static final NamespacedKey DROP_OWNER_KEY = new NamespacedKey("reel", "hooked_fish_drop_owner");
 
-    private record Hooked(Entity mob, Entity display, BukkitTask despawn, BukkitTask air) {
+    private record Hooked(Entity mob, Entity display, BukkitTask despawn, UUID ownerId) {
         void cancelTasks() {
             despawn.cancel();
-            air.cancel();
         }
     }
 
     private final java.util.Random random = new java.util.Random();
     private final Plugin plugin;
+    private final DisplayFollowTicker displayTicker;
+    private final CatchRecords catchRecords;
+    private FishSize.Settings fishSizeSettings;
     private final List<String> modelKeys = new ArrayList<>();          // longest first
     private final Map<UUID, FishHook> hooks = new HashMap<>();          // player -> active hook
+    private final Map<UUID, Location> catchLocations = new HashMap<>(); // last bobber position, captured before retraction
     private final Map<UUID, Hooked> active = new HashMap<>();           // mob uuid -> hooked fish
 
-    public HookedFishManager(Plugin plugin) {
+    public HookedFishManager(Plugin plugin, DisplayFollowTicker displayTicker, CatchRecords catchRecords) {
         this.plugin = plugin;
+        this.displayTicker = displayTicker;
+        this.catchRecords = catchRecords;
         reload();
     }
 
     public void reload() {
+        fishSizeSettings = FishSize.Settings.from(plugin.getConfig().getConfigurationSection("hooked-fish.size"));
         modelKeys.clear();
         File file = new File(plugin.getDataFolder(), "hooked_fish.txt");
         try {
@@ -128,12 +137,31 @@ public final class HookedFishManager implements Listener {
     }
 
     /** Spawns the hooked fish for this player's current hook. */
-    public void spawn(Player player, ItemStack fish, String modelKey) {
+    public void spawn(Player player, ItemStack fish, String modelKey, boolean anchorHook, Location spawnLocation) {
+        spawn(player, fish, modelKey, anchorHook, spawnLocation, true);
+    }
+
+    /** Spawns a representative model without counting it as a real catch. */
+    public boolean spawnTest(Player player) {
+        if (!enabled()) {
+            return false;
+        }
+        String modelKey = modelKeys.get(0);
+        Location spawnLocation = player.getLocation().add(player.getLocation().getDirection().multiply(3)).add(0, 1, 0);
+        return spawn(player, new ItemStack(org.bukkit.Material.COD), modelKey, false, spawnLocation, false);
+    }
+
+    private boolean spawn(Player player, ItemStack fish, String modelKey, boolean anchorHook,
+                          Location spawnLocation, boolean recordCatch) {
         FileConfiguration cfg = plugin.getConfig();
-        Location base = hookLocation(player);
+        if (spawnLocation == null) {
+            plugin.getLogger().warning("Couldn't spawn hooked fish: no saved bobber location for " + player.getName() + ".");
+            return false;
+        }
+        Location base = spawnLocation.clone();
         World world = base.getWorld();
         if (world == null) {
-            return;
+            return false;
         }
 
         // Hitbox mob: invisible and silent. setAware(false) removes its AI but keeps gravity, block and
@@ -149,7 +177,7 @@ public final class HookedFishManager implements Listener {
         if (!(spawned instanceof LivingEntity mob)) {
             spawned.remove();
             plugin.getLogger().warning("hooked-fish.hitbox-mob must be a living entity type.");
-            return;
+            return false;
         }
         if (mob instanceof Mob m) {
             m.setAware(false);
@@ -166,7 +194,7 @@ public final class HookedFishManager implements Listener {
             mob.addPotionEffect(new PotionEffect(fireRes, PotionEffect.INFINITE_DURATION, 0, false, false));
         }
         // Rolled size: scales the hitbox and model, and is stamped on the fish item as its length.
-        FishSize size = FishSize.roll(cfg.getConfigurationSection("hooked-fish.size"), random);
+        FishSize size = FishSize.roll(fishSizeSettings, random, anchorHook);
         double sizeScale = size != null ? size.scale() : 1.0;
         ItemStack stamped = fish.clone();
         if (size != null) {
@@ -213,38 +241,40 @@ public final class HookedFishManager implements Listener {
 
         long ticks = Math.max(1L, cfg.getLong("hooked-fish.despawn-seconds", 60L)) * 20L;
         UUID id = mob.getUniqueId();
-        BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            Hooked h = active.remove(id);
-            if (h != null) {
-                h.cancelTasks();
-                h.mob().remove();
-                h.display().remove();
-            }
-        }, ticks);
-        // Every tick: the display follows the mob. Every 10 ticks: refill air so it can't drown (only
-        // players should be able to kill it).
-        BukkitTask follow = new BukkitRunnable() {
-            private int n;
+        BukkitTask despawn = Bukkit.getScheduler().runTaskLater(plugin, () -> despawn(id), ticks);
+        active.put(id, new Hooked(mob, display, despawn, player.getUniqueId()));
+        displayTicker.track(mob, display, yaw, 10, () -> mob.setRemainingAir(mob.getMaximumAir()),
+                () -> remove(id));
+        if (recordCatch) {
+            catchRecords.recordFish(player.getUniqueId(), player.getName(), modelKey,
+                    size == null ? 0 : size.lengthCm(), size == null ? -1 : size.tier());
+        }
+        return true;
+    }
 
-            @Override
-            public void run() {
-                if (!mob.isValid()) {
-                    display.remove();
-                    active.remove(id);
-                    task.cancel();
-                    cancel();
-                    return;
-                }
-                Location l = mob.getLocation();
-                l.setYaw(yaw);
-                l.setPitch(0f);
-                display.teleport(l);
-                if (++n % 10 == 0) {
-                    mob.setRemainingAir(mob.getMaximumAir());
-                }
-            }
-        }.runTaskTimer(plugin, 1L, 1L);
-        active.put(id, new Hooked(mob, display, task, follow));
+    private void despawn(UUID id) {
+        Hooked hooked = active.get(id);
+        if (hooked == null) {
+            return;
+        }
+        Player owner = Bukkit.getPlayer(hooked.ownerId());
+        remove(id);
+        String message = plugin.getConfig().getString("hooked-fish.despawn-message",
+                "Your fish flopped back to the water!");
+        if (owner != null && message != null && !message.isBlank()) {
+            owner.sendMessage(Component.text(message));
+        }
+    }
+
+    private void remove(UUID id) {
+        Hooked hooked = active.remove(id);
+        if (hooked == null) {
+            return;
+        }
+        displayTicker.untrack(id);
+        hooked.cancelTasks();
+        hooked.mob().remove();
+        hooked.display().remove();
     }
 
     private static Attribute maxHealth() {
@@ -260,25 +290,29 @@ public final class HookedFishManager implements Listener {
         }
     }
 
-    private Location hookLocation(Player player) {
+    public Location catchLocation(Player player) {
         FishHook hook = hooks.get(player.getUniqueId());
         if (hook != null && hook.isValid()) {
             return hook.getLocation();
         }
-        return player.getEyeLocation().add(player.getLocation().getDirection().multiply(2));
+        Location saved = catchLocations.get(player.getUniqueId());
+        return saved == null ? null : saved.clone();
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = false)
     public void onFish(PlayerFishEvent event) {
         PlayerFishEvent.State state = event.getState();
-        if (state == PlayerFishEvent.State.FISHING || state == PlayerFishEvent.State.BITE) {
+        if (state == PlayerFishEvent.State.FISHING || state == PlayerFishEvent.State.BITE
+                || state == PlayerFishEvent.State.CAUGHT_FISH) {
             hooks.put(event.getPlayer().getUniqueId(), event.getHook());
+            catchLocations.put(event.getPlayer().getUniqueId(), event.getHook().getLocation().clone());
         }
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         hooks.remove(event.getPlayer().getUniqueId());
+        catchLocations.remove(event.getPlayer().getUniqueId());
     }
 
     /**
@@ -293,6 +327,11 @@ public final class HookedFishManager implements Listener {
         }
         event.setCancelled(true); // no breeding/feeding/etc. on the hitbox mob
         Player player = event.getPlayer();
+        if (!hooked.ownerId().equals(player.getUniqueId())) {
+            player.sendActionBar(Component.text("This catch belongs to another angler.",
+                    net.kyori.adventure.text.format.NamedTextColor.RED));
+            return;
+        }
         if (event.getHand() != EquipmentSlot.HAND || !player.isSneaking()
                 || !player.getInventory().getItemInMainHand().getType().isAir()) {
             return;
@@ -328,10 +367,7 @@ public final class HookedFishManager implements Listener {
                 fish.setItemMeta(meta);
             }
         }
-        active.remove(event.getRightClicked().getUniqueId());
-        hooked.cancelTasks();
-        hooked.mob().remove();
-        hooked.display().remove();
+        remove(event.getRightClicked().getUniqueId());
         player.getInventory().setItemInMainHand(fish);
     }
 
@@ -341,23 +377,63 @@ public final class HookedFishManager implements Listener {
         if (hooked == null) {
             return;
         }
+        displayTicker.untrack(event.getEntity().getUniqueId());
         hooked.cancelTasks();
         hooked.display().remove();
         byte[] bytes = event.getEntity().getPersistentDataContainer().get(FISH_KEY, PersistentDataType.BYTE_ARRAY);
         event.getDrops().clear();
         event.setDroppedExp(0);
         if (bytes != null) {
-            event.getDrops().add(ItemStack.deserializeBytes(bytes));
+            ItemStack fish = ItemStack.deserializeBytes(bytes);
+            Item drop = event.getEntity().getWorld().dropItemNaturally(event.getEntity().getLocation(), fish);
+            drop.setOwner(hooked.ownerId());
+            drop.setCanMobPickup(false);
+            drop.getPersistentDataContainer().set(DROP_OWNER_KEY, PersistentDataType.STRING,
+                    hooked.ownerId().toString());
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onOtherPlayerDamage(EntityDamageByEntityEvent event) {
+        Hooked hooked = active.get(event.getEntity().getUniqueId());
+        if (hooked == null) {
+            return;
+        }
+        Player attacker = responsiblePlayer(event.getDamager());
+        if (attacker == null || !hooked.ownerId().equals(attacker.getUniqueId())) {
+            event.setCancelled(true);
+            if (attacker != null) {
+                attacker.sendActionBar(Component.text("This catch belongs to another angler.",
+                        net.kyori.adventure.text.format.NamedTextColor.RED));
+            }
+        }
+    }
+
+    private Player responsiblePlayer(Entity damager) {
+        if (damager instanceof Player player) {
+            return player;
+        }
+        if (damager instanceof Projectile projectile && projectile.getShooter() instanceof Player player) {
+            return player;
+        }
+        return null;
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onFishDropPickup(EntityPickupItemEvent event) {
+        if (!(event.getEntity() instanceof Player player)) {
+            return;
+        }
+        String owner = event.getItem().getPersistentDataContainer().get(DROP_OWNER_KEY, PersistentDataType.STRING);
+        if (owner != null && !owner.equals(player.getUniqueId().toString())) {
+            event.setCancelled(true);
         }
     }
 
     /** Removes every hooked fish (plugin disable). */
     public void clear() {
-        for (Hooked h : new ArrayList<>(active.values())) {
-            h.cancelTasks();
-            h.mob().remove();
-            h.display().remove();
+        for (UUID id : new ArrayList<>(active.keySet())) {
+            remove(id);
         }
-        active.clear();
     }
 }
