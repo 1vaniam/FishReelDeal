@@ -579,6 +579,24 @@
     "consumable": null,
     "category": "hook"
   },
+  "weather_radio": {
+    "base_item": "minecraft:compass",
+    "item_name": {
+      "text": "Weather Radio"
+    },
+    "item_model": "reel:weather_radio",
+    "max_stack_size": 1,
+    "rarity": "uncommon",
+    "lore": [
+      "§7Right-click to check the weather.",
+      "§7Warns of upcoming weather events",
+      "§7while carried in your hotbar.",
+      "§r§9Reel Deal"
+    ],
+    "food": null,
+    "consumable": null,
+    "category": "utility"
+  },
   "woven_line": {
     "base_item": "minecraft:bee_spawn_egg",
     "item_name": {

@@ -25,6 +25,7 @@ public final class FishLoot {
             return anchorCatchTable(lineId, catchLocation, random);
         }
         return switch (lineId) {
+            case null -> defaultWoven(random);
             case "fiber_line" -> defaultFiber(catchLocation, random);
             case "reinforced_line" -> defaultCommon(random);
             default -> defaultWoven(random);

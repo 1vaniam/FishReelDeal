@@ -10,6 +10,7 @@ public final class MineralLoot {
 
     public ItemStack resolve(String lineId, Location catchLocation, Random random) {
         return switch (lineId) {
+            case null -> wovenTier(random);
             case "fiber_line" -> fiberTier(catchLocation, random);
             case "reinforced_line" -> reinforcedTier(random);
             default -> wovenTier(random);

@@ -8,6 +8,7 @@ import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
 import org.bukkit.World;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -25,6 +26,10 @@ import org.bukkit.util.Vector;
 import java.util.Random;
 
 public final class FishingLootResolver implements Listener {
+
+    private static final String DEFAULT_BARREL_MESSAGE =
+            "<gold><bold>BARREL!</bold></gold> <yellow>You fished up a barrel! Break it open — it might contain some treasure.</yellow>";
+    private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
 
     private enum Category { JUNK, TREASURE, MINERAL, FISH }
 
@@ -66,6 +71,10 @@ public final class FishingLootResolver implements Listener {
         if (barrels.shouldCatch(hookId, random) && barrels.spawn(player, loc)) {
             if (event.getCaught() instanceof Item caughtItem) {
                 caughtItem.remove();
+            }
+            String message = plugin.getConfig().getString("barrel-catch.catch-message", DEFAULT_BARREL_MESSAGE);
+            if (message != null && !message.isBlank()) {
+                player.sendMessage(MINI_MESSAGE.deserialize(message));
             }
             PyroFishingIntegration.markBarrelCatch(player.getUniqueId(), System.currentTimeMillis());
             return;

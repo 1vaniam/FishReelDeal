@@ -21,6 +21,7 @@ public final class DisplayFollowTicker {
         private final int actionPeriod;
         private final Runnable periodicAction;
         private final Runnable onInvalid;
+        private Location lastLocation;
         private int ticks;
 
         private Follow(Entity target, Entity display, Float yaw, int actionPeriod,
@@ -31,6 +32,7 @@ public final class DisplayFollowTicker {
             this.actionPeriod = actionPeriod;
             this.periodicAction = periodicAction;
             this.onInvalid = onInvalid;
+            this.lastLocation = display.getLocation();
         }
     }
 
@@ -79,7 +81,10 @@ public final class DisplayFollowTicker {
                 location.setYaw(follow.yaw);
             }
             location.setPitch(0f);
-            follow.display.teleport(location);
+            if (!sameLocation(follow.lastLocation, location)) {
+                follow.display.teleport(location);
+                follow.lastLocation = location.clone();
+            }
 
             if (follow.actionPeriod > 0 && ++follow.ticks % follow.actionPeriod == 0
                     && follow.periodicAction != null) {
@@ -87,6 +92,15 @@ public final class DisplayFollowTicker {
             }
         }
         stopIfEmpty();
+    }
+
+    private boolean sameLocation(Location a, Location b) {
+        return a.getWorld() == b.getWorld()
+                && a.getX() == b.getX()
+                && a.getY() == b.getY()
+                && a.getZ() == b.getZ()
+                && a.getYaw() == b.getYaw()
+                && a.getPitch() == b.getPitch();
     }
 
     private void stopIfEmpty() {

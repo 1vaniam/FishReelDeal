@@ -10,7 +10,10 @@ import dev.reeldeal.integration.PyroFishingIntegration;
 import dev.reeldeal.item.FishingRodFactory;
 import dev.reeldeal.item.ItemRegistry;
 import dev.reeldeal.item.ReelItemGuard;
+import dev.reeldeal.item.RodWorkbench;
 import dev.reeldeal.recipe.RecipeRegistrar;
+import dev.reeldeal.weather.WeatherEventManager;
+import dev.reeldeal.weather.WeatherRadioManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ReelDealPlugin extends JavaPlugin {
@@ -21,17 +24,23 @@ public final class ReelDealPlugin extends JavaPlugin {
     private BarrelCatchManager barrelCatches;
     private CatchRecords catchRecords;
     private DisplayFollowTicker displayTicker;
+    private WeatherEventManager weatherEvents;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
 
+        this.weatherEvents = new WeatherEventManager(this);
+
         this.itemRegistry = new ItemRegistry(this);
         this.rodFactory = new FishingRodFactory(this, itemRegistry);
         this.catchRecords = new CatchRecords(this);
+        RodWorkbench workbench = new RodWorkbench(itemRegistry, rodFactory);
         reload();
 
         getServer().getPluginManager().registerEvents(new ReelItemGuard(itemRegistry), this);
+        getServer().getPluginManager().registerEvents(new WeatherRadioManager(this, itemRegistry, weatherEvents), this);
+        getServer().getPluginManager().registerEvents(workbench, this);
         this.displayTicker = new DisplayFollowTicker(this);
         this.barrelCatches = new BarrelCatchManager(this, displayTicker);
         getServer().getPluginManager().registerEvents(barrelCatches, this);
@@ -50,7 +59,7 @@ public final class ReelDealPlugin extends JavaPlugin {
         PyroFishingIntegration.tryRegister(this, rodFactory, pyroEnabled, pyroChance, pyroReplace, pyroDebug, hookedFish);
 
         ReelCommand reelCommand = new ReelCommand(itemRegistry, rodFactory, this::reload, catchRecords,
-                hookedFish, barrelCatches);
+                hookedFish, barrelCatches, workbench, weatherEvents);
         registerCommand("reel", "ReelDeal admin/debug commands", java.util.List.of(), reelCommand);
         getServer().getScheduler().runTaskTimer(this, catchRecords::saveAsync, 1200L, 1200L);
 
@@ -63,6 +72,9 @@ public final class ReelDealPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (weatherEvents != null) {
+            weatherEvents.stop();
+        }
         if (catchRecords != null) {
             catchRecords.saveNow();
         }
@@ -92,5 +104,9 @@ public final class ReelDealPlugin extends JavaPlugin {
 
     public FishingRodFactory rods() {
         return rodFactory;
+    }
+
+    public WeatherEventManager weatherEvents() {
+        return weatherEvents;
     }
 }

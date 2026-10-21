@@ -39,6 +39,8 @@ import java.util.Map;
 
 public final class ItemRegistry {
 
+    private static final Gson GSON = new Gson();
+
     private final Plugin plugin;
     private final File itemsFile;
     private final Map<String, ItemStack> templates = new LinkedHashMap<>();
@@ -53,6 +55,7 @@ public final class ItemRegistry {
         ensureItemsFileExists();
         templates.clear();
         definitions.clear();
+        definitions.putAll(readBundledDefinitions());
         definitions.putAll(readDefinitions());
         for (ItemDefinition def : definitions.values()) {
             templates.put(def.id(), build(def));
@@ -142,16 +145,32 @@ public final class ItemRegistry {
 
     private Map<String, ItemDefinition> readDefinitions() {
         try (Reader reader = new InputStreamReader(new FileInputStream(itemsFile), StandardCharsets.UTF_8)) {
-            Gson gson = new Gson();
-            JsonObject root = gson.fromJson(reader, JsonObject.class);
-            Map<String, ItemDefinition> result = new LinkedHashMap<>();
-            for (String id : root.keySet()) {
-                result.put(id, ItemDefinition.fromJson(id, root.getAsJsonObject(id)));
-            }
-            return result;
+            return parseDefinitions(reader);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to load items.json from " + itemsFile, e);
         }
+    }
+
+    private Map<String, ItemDefinition> readBundledDefinitions() {
+        try (InputStream in = plugin.getResource("reel/items.json")) {
+            if (in == null) {
+                return Map.of();
+            }
+            try (Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
+                return parseDefinitions(reader);
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load bundled reel/items.json", e);
+        }
+    }
+
+    private Map<String, ItemDefinition> parseDefinitions(Reader reader) {
+        JsonObject root = GSON.fromJson(reader, JsonObject.class);
+        Map<String, ItemDefinition> result = new LinkedHashMap<>();
+        for (String id : root.keySet()) {
+            result.put(id, ItemDefinition.fromJson(id, root.getAsJsonObject(id)));
+        }
+        return result;
     }
 
     private ItemStack build(ItemDefinition def) {

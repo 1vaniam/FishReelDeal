@@ -2,10 +2,12 @@ package dev.reeldeal.command;
 
 import dev.reeldeal.item.FishingRodFactory;
 import dev.reeldeal.item.ItemRegistry;
+import dev.reeldeal.item.RodWorkbench;
 import dev.reeldeal.recipe.RecipeRegistrar;
 import dev.reeldeal.fishing.CatchRecords;
 import dev.reeldeal.fishing.BarrelCatchManager;
 import dev.reeldeal.fishing.HookedFishManager;
+import dev.reeldeal.weather.WeatherEventManager;
 import io.papermc.paper.command.brigadier.BasicCommand;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import net.kyori.adventure.text.Component;
@@ -32,15 +34,25 @@ public final class ReelCommand implements BasicCommand {
     private final CatchRecords catchRecords;
     private final HookedFishManager hookedFish;
     private final BarrelCatchManager barrels;
+    private final RodWorkbench workbench;
+    private final WeatherEventManager weatherEvents;
 
     public ReelCommand(ItemRegistry items, FishingRodFactory rods, Runnable reloadAction, CatchRecords catchRecords,
-                       HookedFishManager hookedFish, BarrelCatchManager barrels) {
+                       HookedFishManager hookedFish, BarrelCatchManager barrels, RodWorkbench workbench) {
+        this(items, rods, reloadAction, catchRecords, hookedFish, barrels, workbench, null);
+    }
+
+    public ReelCommand(ItemRegistry items, FishingRodFactory rods, Runnable reloadAction, CatchRecords catchRecords,
+                       HookedFishManager hookedFish, BarrelCatchManager barrels, RodWorkbench workbench,
+                       WeatherEventManager weatherEvents) {
         this.items = items;
         this.rods = rods;
         this.reloadAction = reloadAction;
         this.catchRecords = catchRecords;
         this.hookedFish = hookedFish;
         this.barrels = barrels;
+        this.workbench = workbench;
+        this.weatherEvents = weatherEvents;
     }
 
     @Override
@@ -55,6 +67,13 @@ public final class ReelCommand implements BasicCommand {
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "stats" -> handleStats(sender, args);
             case "leaderboard" -> handleLeaderboard(sender, args);
+            case "workbench" -> {
+                if (sender instanceof Player player) {
+                    workbench.open(player);
+                } else {
+                    sender.sendMessage(Component.text("Only players can open the rod workbench.", NamedTextColor.RED));
+                }
+            }
             case "test" -> {
                 if (requireAdmin(sender)) handleTest(sender, args);
             }
@@ -128,7 +147,7 @@ public final class ReelCommand implements BasicCommand {
     }
 
     private String displayModel(String model) {
-        String[] words = model.replace('_', ' ').split(" ");
+        String[] words = model.replace('_', ' ').replace('-', ' ').split(" ");
         StringBuilder result = new StringBuilder();
         for (String word : words) {
             if (word.isEmpty()) continue;
@@ -170,8 +189,13 @@ public final class ReelCommand implements BasicCommand {
     }
 
     private void handleTest(CommandSender sender, String[] args) {
+        if (args.length >= 2 && args[1].equalsIgnoreCase("weather")) {
+            handleTestWeather(sender, args);
+            return;
+        }
         if (args.length != 2 || (!args[1].equalsIgnoreCase("fish") && !args[1].equalsIgnoreCase("barrel"))) {
-            sender.sendMessage(Component.text("Usage: /reel test <fish|barrel>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /reel test <fish|barrel> or /reel test weather <event> [seconds]",
+                    NamedTextColor.RED));
             return;
         }
         if (!(sender instanceof Player player)) {
@@ -194,6 +218,50 @@ public final class ReelCommand implements BasicCommand {
             sender.sendMessage(Component.text("Couldn't spawn the test barrel; check the server log.",
                     NamedTextColor.RED));
         }
+    }
+
+    private void handleTestWeather(CommandSender sender, String[] args) {
+        if (args.length == 3 && args[2].equalsIgnoreCase("stop")) {
+            if (weatherEvents != null && weatherEvents.stopTestEvent()) {
+                sender.sendMessage(Component.text("Stopped the active event or canceled its countdown.",
+                        NamedTextColor.GREEN));
+            } else {
+                sender.sendMessage(Component.text("There is no active event or countdown to stop.",
+                        NamedTextColor.YELLOW));
+            }
+            return;
+        }
+        if (args.length < 3 || args.length > 4) {
+            sender.sendMessage(Component.text("Usage: /reel test weather <event> [seconds]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("       /reel test weather stop", NamedTextColor.RED));
+            return;
+        }
+        String eventId = args[2].toLowerCase(Locale.ROOT);
+        if (weatherEvents == null || !weatherEvents.isSupportedEvent(eventId)) {
+            sender.sendMessage(Component.text("Unknown weather event. Choose one of the registered event IDs.",
+                    NamedTextColor.RED));
+            return;
+        }
+        int seconds = 10;
+        if (args.length == 4) {
+            try {
+                seconds = Integer.parseInt(args[3]);
+            } catch (NumberFormatException exception) {
+                sender.sendMessage(Component.text("Countdown must be a whole number of seconds.", NamedTextColor.RED));
+                return;
+            }
+        }
+        if (seconds < 1 || seconds > 300) {
+            sender.sendMessage(Component.text("Countdown must be between 1 and 300 seconds.", NamedTextColor.RED));
+            return;
+        }
+        if (!weatherEvents.scheduleTestEvent(eventId, seconds)) {
+            sender.sendMessage(Component.text("A weather event is already active; wait for it to end first.",
+                    NamedTextColor.RED));
+            return;
+        }
+        sender.sendMessage(Component.text("Scheduled " + displayModel(eventId) + " to start in " + seconds
+                + (seconds == 1 ? " second." : " seconds."), NamedTextColor.GREEN));
     }
 
     private void handleGive(CommandSender sender, String[] args) {
@@ -350,7 +418,10 @@ public final class ReelCommand implements BasicCommand {
         sender.sendMessage(Component.text("Usage:", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel stats [player]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel leaderboard [largest|catches]", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  /reel workbench", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel test <fish|barrel>", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  /reel test weather <event> [seconds]", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  /reel test weather stop", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel give <item> [player]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel give rod <line> <hook> [player]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel add <line|hook> <item>", NamedTextColor.YELLOW));
@@ -362,21 +433,26 @@ public final class ReelCommand implements BasicCommand {
         CommandSender sender = source.getSender();
         if (args.length > 0 && !source.getSender().hasPermission(PERMISSION)
                 && !args[0].equalsIgnoreCase("stats")
-                && !args[0].equalsIgnoreCase("leaderboard")) {
+                && !args[0].equalsIgnoreCase("leaderboard")
+                && !args[0].equalsIgnoreCase("workbench")) {
             return List.of();
         }
         List<String> options = switch (args.length) {
             case 1 -> sender.hasPermission(PERMISSION)
-                    ? List.of("stats", "leaderboard", "test", "give", "add", "reload") : List.of("stats", "leaderboard");
+                    ? List.of("stats", "leaderboard", "workbench", "test", "give", "add", "reload")
+                    : List.of("stats", "leaderboard", "workbench");
             case 2 -> args[0].equalsIgnoreCase("stats") ? onlinePlayerNames()
                     : args[0].equalsIgnoreCase("leaderboard") ? List.of("largest", "catches")
                     : !sender.hasPermission(PERMISSION) ? List.of()
-                    : args[0].equalsIgnoreCase("test") ? List.of("fish", "barrel")
+                    : args[0].equalsIgnoreCase("test") ? List.of("fish", "barrel", "weather")
                     : args[0].equalsIgnoreCase("give") ? concat(items.ids(), List.of("rod"))
                     : args[0].equalsIgnoreCase("add") ? List.of("line", "hook")
                     : List.of();
             case 3 -> args[0].equalsIgnoreCase("give") && args[1].equalsIgnoreCase("rod") ? RecipeRegistrar.LINES
                     : args[0].equalsIgnoreCase("give") ? onlinePlayerNames()
+                    : args[0].equalsIgnoreCase("test") && args[1].equalsIgnoreCase("weather")
+                    ? weatherEvents == null ? List.of("acid-rain", "pollen-drift", "stop")
+                    : concat(weatherEvents.eventIds(), List.of("stop"))
                     : args[0].equalsIgnoreCase("add") ? itemsInCategory(args[1])
                     : List.of();
             case 4 -> args[0].equalsIgnoreCase("give") && args[1].equalsIgnoreCase("rod") ? RecipeRegistrar.HOOKS : List.of();

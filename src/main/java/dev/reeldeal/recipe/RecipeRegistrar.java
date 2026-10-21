@@ -30,14 +30,25 @@ public final class RecipeRegistrar {
     }
 
     private static final List<String> STATIC_RECIPE_KEYS = List.of(
-            "woven_line_h", "woven_line_v", "reinforced_line", "fiber_line_h", "fiber_line_v", "iron_hook");
+            "woven_line_h", "woven_line_v", "reinforced_line", "fiber_line_h", "fiber_line_v", "iron_hook",
+            "weather_radio");
 
     public void registerAll() {
         removeManagedRecipes();
 
         registerLineRecipes();
         registerHookRecipes();
+        registerWeatherRadioRecipe();
         registerRodRecipes();
+    }
+
+    private void registerWeatherRadioRecipe() {
+        addShaped("weather_radio", items.create("weather_radio"),
+                new String[]{"CRC", "RMR", "CRC"},
+                Map.of(
+                        'C', material(Material.COPPER_INGOT),
+                        'R', material(Material.REDSTONE),
+                        'M', material(Material.COMPASS)));
     }
 
     private void registerLineRecipes() {

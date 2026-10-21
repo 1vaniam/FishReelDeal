@@ -64,10 +64,10 @@ public final class FishingRodFactory {
         if (nativeRod) {
             meta.lore(buildLore(lineId, hookId));
             pdc.set(ReelKeys.CONSTRUCTED, PersistentDataType.BOOLEAN, true);
-            pdc.set(ReelKeys.LINE, PersistentDataType.STRING, "reel:" + lineId);
-            pdc.set(ReelKeys.HOOK, PersistentDataType.STRING, "reel:" + hookId);
+            setAttachment(pdc, ReelKeys.LINE, lineId);
+            setAttachment(pdc, ReelKeys.HOOK, hookId);
             pdc.set(ReelKeys.NATIVE, PersistentDataType.BOOLEAN, true);
-            applyCustomModelDataStrings(meta, List.of("reel:" + lineId, "reel:" + hookId));
+            applyCustomModelDataStrings(meta, attachmentModelIds(lineId, hookId));
             rod.setItemMeta(meta);
             return rod;
         }
@@ -83,8 +83,8 @@ public final class FishingRodFactory {
         meta.lore(lore);
 
         pdc.set(ReelKeys.CONSTRUCTED, PersistentDataType.BOOLEAN, true);
-        pdc.set(ReelKeys.LINE, PersistentDataType.STRING, "reel:" + lineId);
-        pdc.set(ReelKeys.HOOK, PersistentDataType.STRING, "reel:" + hookId);
+        setAttachment(pdc, ReelKeys.LINE, lineId);
+        setAttachment(pdc, ReelKeys.HOOK, hookId);
         pdc.set(ReelKeys.APPENDED_LORE_LINES, PersistentDataType.INTEGER, appended.size());
 
         rod.setItemMeta(meta);
@@ -108,10 +108,10 @@ public final class FishingRodFactory {
         if (color == null) {
             color = NamedTextColor.DARK_AQUA;
         }
-        return List.of(
-                Component.empty(),
-                Component.text(lineLabel + ": ", color).append(items.appliedNameHeader(lineId)),
-                Component.text(hookLabel + ": ", color).append(items.appliedNameHeader(hookId)));
+        List<Component> lore = new ArrayList<>();
+        if (lineId != null) lore.add(Component.text(lineLabel + ": ", color).append(items.appliedNameHeader(lineId)));
+        if (hookId != null) lore.add(Component.text(hookLabel + ": ", color).append(items.appliedNameHeader(hookId)));
+        return lore;
     }
 
     public String lineOf(ItemStack rod) {
@@ -125,16 +125,36 @@ public final class FishingRodFactory {
     private List<Component> buildLore(String lineId, String hookId) {
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
-        lore.add(items.appliedNameHeader(lineId));
-        lore.add(Component.empty());
-        lore.addAll(items.ownLoreBody(lineId));
-        lore.add(Component.empty());
-        lore.add(items.appliedNameHeader(hookId));
-        lore.add(Component.empty());
-        lore.addAll(items.ownLoreBody(hookId));
+        if (lineId != null) {
+            lore.add(items.appliedNameHeader(lineId));
+            lore.add(Component.empty());
+            lore.addAll(items.ownLoreBody(lineId));
+        }
+        if (hookId != null) {
+            lore.add(Component.empty());
+            lore.add(items.appliedNameHeader(hookId));
+            lore.add(Component.empty());
+            lore.addAll(items.ownLoreBody(hookId));
+        }
         lore.add(Component.empty());
         lore.add(FOOTER);
         return lore;
+    }
+
+    private void setAttachment(org.bukkit.persistence.PersistentDataContainer pdc,
+                               org.bukkit.NamespacedKey key, String id) {
+        if (id == null || id.isBlank()) {
+            pdc.remove(key);
+        } else {
+            pdc.set(key, PersistentDataType.STRING, id.startsWith("reel:") ? id : "reel:" + id);
+        }
+    }
+
+    private List<String> attachmentModelIds(String lineId, String hookId) {
+        List<String> ids = new ArrayList<>(2);
+        if (lineId != null) ids.add(lineId.startsWith("reel:") ? lineId : "reel:" + lineId);
+        if (hookId != null) ids.add(hookId.startsWith("reel:") ? hookId : "reel:" + hookId);
+        return ids;
     }
 
     private void applyCustomModelDataStrings(ItemMeta meta, List<String> strings) {
