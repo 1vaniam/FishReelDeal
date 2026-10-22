@@ -208,21 +208,25 @@ public final class WeatherEventManager {
         String path = eventConfigPath(eventId);
         double chance = clamp(plugin.getConfig().getDouble(path + "effect-chance-per-check", 0.2), 0.0, 1.0);
         String soundId = plugin.getConfig().getString(path + "sound", defaultSound(eventId));
-        if (soundId == null || soundId.isBlank()) return;
         float volume = (float) clamp(plugin.getConfig().getDouble(path + "sound-volume", 0.1), 0.0, 1.0);
         float pitch = (float) clamp(plugin.getConfig().getDouble(path + "sound-pitch", 1.0), 0.5, 2.0);
         int particles = Math.max(0, plugin.getConfig().getInt(path + "particle-count", 4));
-        Particle particle = defaultParticle(eventId);
+        Particle particle = configuredParticle(path + "particle", eventId);
+        double height = plugin.getConfig().getDouble(path + "particle-height", METEOR_DUST.equals(eventId) ? 10.0 : 1.5);
+        double spread = Math.max(0.0, plugin.getConfig().getDouble(path + "particle-spread", METEOR_DUST.equals(eventId) ? 0.8 : 0.35));
+        double verticalSpread = Math.max(0.0, plugin.getConfig().getDouble(path + "particle-vertical-spread", METEOR_DUST.equals(eventId) ? 0.0 : spread));
+        double particleSpeed = Math.max(0.0, plugin.getConfig().getDouble(path + "particle-speed", 0.02));
+        boolean requireSky = plugin.getConfig().getBoolean(path + "require-sky-exposure", true);
 
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (!isExposedToSky(player) || ThreadLocalRandom.current().nextDouble() >= chance) continue;
+            if ((requireSky && !isExposedToSky(player)) || ThreadLocalRandom.current().nextDouble() >= chance) continue;
             var location = player.getLocation();
-            player.playSound(location, soundId, SoundCategory.AMBIENT, volume, pitch);
-            if (particles > 0) {
-                double height = METEOR_DUST.equals(eventId) ? 10.0 : 1.5;
-                double spread = METEOR_DUST.equals(eventId) ? 0.8 : 0.35;
+            if (soundId != null && !soundId.isBlank() && volume > 0.0f) {
+                player.playSound(location, soundId, SoundCategory.AMBIENT, volume, pitch);
+            }
+            if (particle != null && particles > 0) {
                 player.spawnParticle(particle, location.clone().add(0, height, 0),
-                        particles, spread, METEOR_DUST.equals(eventId) ? 0.0 : spread, spread, 0.02);
+                        particles, spread, verticalSpread, spread, particleSpeed);
             }
         }
     }
@@ -358,6 +362,9 @@ public final class WeatherEventManager {
     }
 
     private String displayName(String id) {
+        if (id == null) return "Unknown";
+        String configured = plugin.getConfig().getString(eventConfigPath(id) + "display-name");
+        if (configured != null && !configured.isBlank()) return configured;
         return switch (id) {
             case ACID_RAIN -> "Acid Rain";
             case POLLEN_DRIFT -> "Pollen Drift";
@@ -368,7 +375,7 @@ public final class WeatherEventManager {
             case METEOR_DUST -> "Meteor Dust";
             case SPORE_BLOOM -> "Spore Bloom";
             case MAGNETIC_DISTURBANCE -> "Magnetic Disturbance";
-            default -> id == null ? "Unknown" : id;
+            default -> id;
         };
     }
 
@@ -387,18 +394,33 @@ public final class WeatherEventManager {
         };
     }
 
-    private Particle defaultParticle(String eventId) {
+    private Particle configuredParticle(String path, String eventId) {
+        String particleName = plugin.getConfig().getString(path, defaultParticleName(eventId));
+        if (particleName == null || particleName.isBlank() || "none".equalsIgnoreCase(particleName)) return null;
+        try {
+            return Particle.valueOf(particleName.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            plugin.getLogger().warning("Invalid particle '" + particleName + "' at " + path + "; using event default.");
+            try {
+                return Particle.valueOf(defaultParticleName(eventId));
+            } catch (IllegalArgumentException ignored) {
+                return null;
+            }
+        }
+    }
+
+    private String defaultParticleName(String eventId) {
         return switch (eventId) {
-            case ACID_RAIN -> Particle.FALLING_WATER;
-            case POLLEN_DRIFT -> Particle.SPORE_BLOSSOM_AIR;
-            case ASHFALL -> Particle.ASH;
-            case COLD_SNAP -> Particle.SNOWFLAKE;
-            case DUST_HAZE -> Particle.WHITE_ASH;
-            case FIREFLY_NIGHT -> Particle.END_ROD;
-            case METEOR_DUST -> Particle.FIREWORK;
-            case SPORE_BLOOM -> Particle.SPORE_BLOSSOM_AIR;
-            case MAGNETIC_DISTURBANCE -> Particle.ELECTRIC_SPARK;
-            default -> Particle.CRIT;
+            case ACID_RAIN -> "FALLING_WATER";
+            case POLLEN_DRIFT -> "SPORE_BLOSSOM_AIR";
+            case ASHFALL -> "ASH";
+            case COLD_SNAP -> "SNOWFLAKE";
+            case DUST_HAZE -> "WHITE_ASH";
+            case FIREFLY_NIGHT -> "END_ROD";
+            case METEOR_DUST -> "FIREWORK";
+            case SPORE_BLOOM -> "SPORE_BLOSSOM_AIR";
+            case MAGNETIC_DISTURBANCE -> "ELECTRIC_SPARK";
+            default -> "CRIT";
         };
     }
 

@@ -8,6 +8,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
+import java.util.List;
 import java.util.Random;
 
 public final class FishLoot {
@@ -37,23 +38,30 @@ public final class FishLoot {
 
     private CaughtResult anchorCatchTable(String lineId, Location loc, Random random) {
         Biome biome = loc.getBlock().getBiome();
-        boolean anyOcean = ReelBiomes.JUNK_OCEAN.contains(biome) || ReelBiomes.JUNK_WARM_OCEAN.contains(biome);
+        boolean anyOcean = biomeMatches("fishing.anchor-hook.eligibility.dolphin-biomes", biome,
+                List.of("ocean", "cold_ocean", "frozen_ocean", "deep_ocean", "deep_cold_ocean",
+                        "deep_frozen_ocean", "warm_ocean", "lukewarm_ocean", "deep_lukewarm_ocean"));
 
         WeightedPool<CaughtResult> pool = new WeightedPool<>();
-        pool.add(CaughtResult.item(new ItemStack(Material.COD)), 60);
-        pool.add(CaughtResult.item(new ItemStack(Material.SALMON)), 25);
-        pool.add(CaughtResult.item(new ItemStack(Material.PUFFERFISH)), 13);
-        pool.add(CaughtResult.item(new ItemStack(Material.TROPICAL_FISH)), 2);
+        addCommonFishResults(pool, "fishing.anchor-hook.fish-weights.");
         int squidWeight = Math.max(0, plugin.getConfig().getInt("fishing.anchor-hook.mob-weights.squid", 5));
         int dolphinWeight = Math.max(0, plugin.getConfig().getInt("fishing.anchor-hook.mob-weights.dolphin", 5));
-        pool.add(CaughtResult.mob(EntityType.SQUID), squidWeight, ReelBiomes.JUNK_RIVER.contains(biome));
+        boolean squidEligible = biomeMatches("fishing.anchor-hook.eligibility.squid-biomes", biome,
+                List.of("river", "frozen_river"));
+        pool.add(CaughtResult.mob(EntityType.SQUID), squidWeight, squidEligible);
         pool.add(CaughtResult.mob(EntityType.DOLPHIN), dolphinWeight, anyOcean);
-        pool.add(CaughtResult.mob(EntityType.GLOW_SQUID), 20, loc.getBlockY() <= 32);
-        pool.add(CaughtResult.mob(EntityType.FROG), 20, ReelBiomes.PERMITS_FROGS.contains(biome));
+        int glowSquidMaxY = plugin.getConfig().getInt("fishing.anchor-hook.eligibility.glow-squid-max-y", 32);
+        int glowSquidWeight = Math.max(0, plugin.getConfig().getInt("fishing.anchor-hook.mob-weights.glow-squid", 20));
+        pool.add(CaughtResult.mob(EntityType.GLOW_SQUID), glowSquidWeight, loc.getBlockY() <= glowSquidMaxY);
+        int frogWeight = Math.max(0, plugin.getConfig().getInt("fishing.anchor-hook.mob-weights.frog", 20));
+        boolean frogEligible = biomeMatches("fishing.anchor-hook.eligibility.frog-biomes", biome,
+                List.of("swamp", "mangrove_swamp"));
+        pool.add(CaughtResult.mob(EntityType.FROG), frogWeight, frogEligible);
         if ("fiber_line".equals(lineId)) {
             ItemStack special = resolveSpecialFish(loc);
             if (special != null) {
-                pool.add(CaughtResult.item(special), 1);
+                pool.add(CaughtResult.item(special), Math.max(0,
+                        plugin.getConfig().getInt("fishing.anchor-hook.special-fish-weight", 1)));
             }
         }
 
@@ -63,46 +71,88 @@ public final class FishLoot {
 
     private CaughtResult defaultFiber(Location loc, Random random) {
         WeightedPool<ItemStack> pool = new WeightedPool<>();
-        pool.add(new ItemStack(Material.COD), 60);
-        pool.add(new ItemStack(Material.SALMON), 25);
-        pool.add(new ItemStack(Material.PUFFERFISH), 13);
-        pool.add(new ItemStack(Material.TROPICAL_FISH), 2);
+        addCommonFishItems(pool, "fishing.fish-tables.common.");
 
         ItemStack special = resolveSpecialFish(loc);
         if (special != null) {
-            pool.add(special, 1);
+            pool.add(special, Math.max(0, plugin.getConfig().getInt("fishing.special-fish.weight", 1)));
         }
         ItemStack result = pool.pick(random);
         return CaughtResult.item(result != null ? result : new ItemStack(Material.COD));
     }
 
     private ItemStack resolveSpecialFish(Location loc) {
-        if (loc.getBlockY() <= 0) {
-            return items.create("deepfish");
+        String deepFish = plugin.getConfig().getString("fishing.special-fish.deep-item", "deepfish");
+        String lowDepthFish = plugin.getConfig().getString("fishing.special-fish.low-depth-item", "cobblefish");
+        if (loc.getBlockY() <= plugin.getConfig().getInt("fishing.special-fish.deep-max-y", 0)) {
+            return createSpecialItem(deepFish, "deepfish");
         }
-        if (loc.getBlockY() <= 48) {
-            return items.create("cobblefish");
+        if (loc.getBlockY() <= plugin.getConfig().getInt("fishing.special-fish.low-depth-max-y", 48)) {
+            return createSpecialItem(lowDepthFish, "cobblefish");
         }
         Biome biome = loc.getBlock().getBiome();
-        if (ReelBiomes.HAS_BULLFISH.contains(biome)) {
-            return items.create("bullfish");
-        }
-        if (ReelBiomes.HAS_FISHROOM.contains(biome)) {
-            return items.create("fishroom");
-        }
-        if (ReelBiomes.HAS_ICEHORN.contains(biome)) {
-            return items.create("icehorn");
+        for (String key : List.of("bullfish", "fishroom", "icehorn")) {
+            if (plugin.getConfig().getBoolean("fishing.special-fish.enabled." + key, true)
+                    && biomeMatches("fishing.special-fish.biomes." + key, biome, defaultSpecialBiomes(key))) {
+                String itemId = plugin.getConfig().getString("fishing.special-fish.items." + key, key);
+                return createSpecialItem(itemId, key);
+            }
         }
         return null;
+    }
+
+    private List<String> defaultSpecialBiomes(String fish) {
+        return switch (fish) {
+            case "bullfish" -> List.of("swamp", "mangrove_swamp");
+            case "fishroom" -> List.of("dark_forest", "pale_garden", "mushroom_fields");
+            case "icehorn" -> List.of("snowy_beach", "snowy_plains", "snowy_slopes", "snowy_taiga", "ice_spikes",
+                    "frozen_peaks", "frozen_river", "taiga", "old_growth_pine_taiga", "old_growth_spruce_taiga",
+                    "grove", "meadow", "stony_peaks", "windswept_hills", "windswept_forest",
+                    "windswept_gravelly_hills");
+            default -> List.of();
+        };
+    }
+
+    private boolean biomeMatches(String path, Biome biome, List<String> defaults) {
+        List<String> configured = plugin.getConfig().getStringList(path);
+        List<String> names = plugin.getConfig().isSet(path) ? configured : defaults;
+        String biomeName = biome.getKey().getKey();
+        for (String name : names) {
+            String normalized = name.toLowerCase(java.util.Locale.ROOT);
+            if (normalized.startsWith("minecraft:")) normalized = normalized.substring("minecraft:".length());
+            if (normalized.equals(biomeName)) return true;
+        }
+        return false;
+    }
+
+    private ItemStack createSpecialItem(String configuredId, String fallbackId) {
+        try {
+            return items.create(configuredId);
+        } catch (IllegalArgumentException exception) {
+            plugin.getLogger().warning("Unknown special-fish item ID '" + configuredId
+                    + "'; falling back to '" + fallbackId + "'.");
+            return items.create(fallbackId);
+        }
+    }
+
+    private void addCommonFishResults(WeightedPool<CaughtResult> pool, String path) {
+        pool.add(CaughtResult.item(new ItemStack(Material.COD)), Math.max(0, plugin.getConfig().getInt(path + "cod", 60)));
+        pool.add(CaughtResult.item(new ItemStack(Material.SALMON)), Math.max(0, plugin.getConfig().getInt(path + "salmon", 25)));
+        pool.add(CaughtResult.item(new ItemStack(Material.PUFFERFISH)), Math.max(0, plugin.getConfig().getInt(path + "pufferfish", 13)));
+        pool.add(CaughtResult.item(new ItemStack(Material.TROPICAL_FISH)), Math.max(0, plugin.getConfig().getInt(path + "tropical-fish", 2)));
+    }
+
+    private void addCommonFishItems(WeightedPool<ItemStack> pool, String path) {
+        pool.add(new ItemStack(Material.COD), Math.max(0, plugin.getConfig().getInt(path + "cod", 60)));
+        pool.add(new ItemStack(Material.SALMON), Math.max(0, plugin.getConfig().getInt(path + "salmon", 25)));
+        pool.add(new ItemStack(Material.PUFFERFISH), Math.max(0, plugin.getConfig().getInt(path + "pufferfish", 13)));
+        pool.add(new ItemStack(Material.TROPICAL_FISH), Math.max(0, plugin.getConfig().getInt(path + "tropical-fish", 2)));
     }
 
 
     private CaughtResult defaultCommon(Random random) {
         WeightedPool<ItemStack> pool = new WeightedPool<>();
-        pool.add(new ItemStack(Material.COD), 60);
-        pool.add(new ItemStack(Material.SALMON), 25);
-        pool.add(new ItemStack(Material.PUFFERFISH), 13);
-        pool.add(new ItemStack(Material.TROPICAL_FISH), 2);
+        addCommonFishItems(pool, "fishing.fish-tables.common.");
         ItemStack result = pool.pick(random);
         return CaughtResult.item(result != null ? result : new ItemStack(Material.COD));
     }
@@ -110,8 +160,10 @@ public final class FishLoot {
 
     private CaughtResult defaultWoven(Random random) {
         WeightedPool<ItemStack> pool = new WeightedPool<>();
-        pool.add(new ItemStack(Material.COD), 60);
-        pool.add(new ItemStack(Material.SALMON), 40);
+        pool.add(new ItemStack(Material.COD), Math.max(0,
+                plugin.getConfig().getInt("fishing.fish-tables.woven.cod", 60)));
+        pool.add(new ItemStack(Material.SALMON), Math.max(0,
+                plugin.getConfig().getInt("fishing.fish-tables.woven.salmon", 40)));
         ItemStack result = pool.pick(random);
         return CaughtResult.item(result != null ? result : new ItemStack(Material.COD));
     }

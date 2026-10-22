@@ -11,6 +11,7 @@ weather-events:
     event-chance: 0.05                   # chance per check to schedule any one enabled event
   acid-rain:
     enabled: true
+    display-name: "Acid Rain"
     weight: 1.0                          # relative chance among enabled events
     duration-seconds: 300
     effect-check-interval-seconds: 5
@@ -18,9 +19,17 @@ weather-events:
     sound: "minecraft:block.fire.extinguish"
     sound-volume: 0.12                   # quiet; range 0.0-1.0
     sound-pitch: 0.85
+    particle: FALLING_WATER
+    particle-count: 4
+    particle-height: 1.5
+    particle-spread: 0.35
+    particle-vertical-spread: 0.35
+    particle-speed: 0.02
+    require-sky-exposure: true
     weather-radio-interference: true
   pollen-drift:
     enabled: true
+    display-name: "Pollen Drift"
     weight: 1.0
     duration-seconds: 300
     effect-check-interval-seconds: 8
@@ -28,10 +37,17 @@ weather-events:
     sound: "minecraft:block.azalea_leaves.hit"
     sound-volume: 0.08
     sound-pitch: 1.0
+    particle: SPORE_BLOSSOM_AIR
     particle-count: 5
+    particle-height: 1.5
+    particle-spread: 0.35
+    particle-vertical-spread: 0.35
+    particle-speed: 0.02
+    require-sky-exposure: true
     weather-radio-interference: true
   ashfall:
     enabled: true
+    display-name: "Ashfall"
     weight: 1.0
     duration-seconds: 300
     effect-check-interval-seconds: 8
@@ -39,10 +55,17 @@ weather-events:
     sound: "minecraft:block.sand.fall"
     sound-volume: 0.08
     sound-pitch: 0.9
+    particle: ASH
     particle-count: 5
+    particle-height: 1.5
+    particle-spread: 0.35
+    particle-vertical-spread: 0.35
+    particle-speed: 0.02
+    require-sky-exposure: true
     weather-radio-interference: true
   cold-snap:
     enabled: true
+    display-name: "Cold Snap"
     weight: 1.0
     duration-seconds: 300
     effect-check-interval-seconds: 10
@@ -50,10 +73,17 @@ weather-events:
     sound: "minecraft:block.powder_snow.step"
     sound-volume: 0.07
     sound-pitch: 0.9
+    particle: SNOWFLAKE
     particle-count: 3
+    particle-height: 1.5
+    particle-spread: 0.35
+    particle-vertical-spread: 0.35
+    particle-speed: 0.02
+    require-sky-exposure: true
     weather-radio-interference: true
   dust-haze:
     enabled: true
+    display-name: "Dust Haze"
     weight: 1.0
     duration-seconds: 300
     effect-check-interval-seconds: 8
@@ -61,10 +91,17 @@ weather-events:
     sound: "minecraft:block.sand.idle"
     sound-volume: 0.06
     sound-pitch: 0.8
+    particle: WHITE_ASH
     particle-count: 4
+    particle-height: 1.5
+    particle-spread: 0.35
+    particle-vertical-spread: 0.35
+    particle-speed: 0.02
+    require-sky-exposure: true
     weather-radio-interference: true
   firefly-night:
     enabled: true
+    display-name: "Firefly Night"
     weight: 1.0
     duration-seconds: 300
     effect-check-interval-seconds: 8
@@ -72,10 +109,17 @@ weather-events:
     sound: "minecraft:block.amethyst_block.chime"
     sound-volume: 0.06
     sound-pitch: 1.35
+    particle: END_ROD
     particle-count: 2
+    particle-height: 1.5
+    particle-spread: 0.35
+    particle-vertical-spread: 0.35
+    particle-speed: 0.02
+    require-sky-exposure: true
     weather-radio-interference: true
   meteor-dust:
     enabled: true
+    display-name: "Meteor Dust"
     weight: 1.0
     duration-seconds: 300
     effect-check-interval-seconds: 15
@@ -83,10 +127,17 @@ weather-events:
     sound: "minecraft:entity.firework_rocket.twinkle_far"
     sound-volume: 0.08
     sound-pitch: 0.8
+    particle: FIREWORK
     particle-count: 2
+    particle-height: 10.0
+    particle-spread: 0.8
+    particle-vertical-spread: 0.0
+    particle-speed: 0.02
+    require-sky-exposure: true
     weather-radio-interference: true
   spore-bloom:
     enabled: true
+    display-name: "Spore Bloom"
     weight: 1.0
     duration-seconds: 300
     effect-check-interval-seconds: 8
@@ -94,10 +145,17 @@ weather-events:
     sound: "minecraft:block.spore_blossom.fall"
     sound-volume: 0.08
     sound-pitch: 0.9
+    particle: SPORE_BLOSSOM_AIR
     particle-count: 4
+    particle-height: 1.5
+    particle-spread: 0.35
+    particle-vertical-spread: 0.35
+    particle-speed: 0.02
+    require-sky-exposure: true
     weather-radio-interference: true
   magnetic-disturbance:
     enabled: true
+    display-name: "Magnetic Disturbance"
     weight: 1.0
     duration-seconds: 300
     effect-check-interval-seconds: 12
@@ -105,7 +163,13 @@ weather-events:
     sound: "minecraft:block.amethyst_block.resonate"
     sound-volume: 0.08
     sound-pitch: 0.7
+    particle: ELECTRIC_SPARK
     particle-count: 2
+    particle-height: 1.5
+    particle-spread: 0.35
+    particle-vertical-spread: 0.35
+    particle-speed: 0.02
+    require-sky-exposure: true
     weather-radio-interference: true
 weather-radio:
   warning-lead-minutes: 5                # chat warning time before a scheduled custom event
@@ -115,10 +179,50 @@ weather-radio:
 
 fishing:
   debug: false                          # log selected catch category and resolved result
+  fish-tables:
+    woven:                              # regular catches with woven/default line
+      cod: 60
+      salmon: 40
+    common:                             # reinforced/fiber line and anchor-hook regular catches
+      cod: 60
+      salmon: 25
+      pufferfish: 13
+      tropical-fish: 2
+  special-fish:
+    weight: 1                           # relative chance added to fiber-line and anchor+fiber catches
+    deep-max-y: 0                       # deepfish at or below this Y
+    low-depth-max-y: 48                 # cobblefish above deep-max-y and at or below this Y
+    deep-item: deepfish                 # item ID from items.json
+    low-depth-item: cobblefish
+    items:                              # item IDs from items.json for biome catches
+      bullfish: bullfish
+      fishroom: fishroom
+      icehorn: icehorn
+    enabled:
+      bullfish: true
+      fishroom: true
+      icehorn: true
+    biomes:                            # namespaced or vanilla biome names; empty uses built-in defaults
+      bullfish: [swamp, mangrove_swamp]
+      fishroom: [dark_forest, pale_garden, mushroom_fields]
+      icehorn: [snowy_beach, snowy_plains, snowy_slopes, snowy_taiga, ice_spikes, frozen_peaks, frozen_river, taiga, old_growth_pine_taiga, old_growth_spruce_taiga, grove, meadow, stony_peaks, windswept_hills, windswept_forest, windswept_gravelly_hills]
   anchor-hook:
     mob-weights:                        # weighted among eligible catches; 5 is about 4.8% in a typical river/ocean
       squid: 5
       dolphin: 5
+      glow-squid: 20
+      frog: 20
+    fish-weights:                       # anchor hook's regular fish outcomes
+      cod: 60
+      salmon: 25
+      pufferfish: 13
+      tropical-fish: 2
+    special-fish-weight: 1
+    eligibility:
+      squid-biomes: [river, frozen_river]
+      dolphin-biomes: [ocean, cold_ocean, frozen_ocean, deep_ocean, deep_cold_ocean, deep_frozen_ocean, warm_ocean, lukewarm_ocean, deep_lukewarm_ocean]
+      frog-biomes: [swamp, mangrove_swamp]
+      glow-squid-max-y: 32
   category-weights:
     default:                            # relative weights for standard fishing
       junk: 10
