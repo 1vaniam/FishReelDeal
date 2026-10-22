@@ -6,14 +6,17 @@ import org.bukkit.Material;
 import org.bukkit.block.Biome;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 
 import java.util.Random;
 
 public final class FishLoot {
 
     private final ItemRegistry items;
+    private final Plugin plugin;
 
-    public FishLoot(ItemRegistry items) {
+    public FishLoot(Plugin plugin, ItemRegistry items) {
+        this.plugin = plugin;
         this.items = items;
     }
 
@@ -41,8 +44,10 @@ public final class FishLoot {
         pool.add(CaughtResult.item(new ItemStack(Material.SALMON)), 25);
         pool.add(CaughtResult.item(new ItemStack(Material.PUFFERFISH)), 13);
         pool.add(CaughtResult.item(new ItemStack(Material.TROPICAL_FISH)), 2);
-        pool.add(CaughtResult.mob(EntityType.SQUID), 20, ReelBiomes.JUNK_RIVER.contains(biome));
-        pool.add(CaughtResult.mob(EntityType.DOLPHIN), 20, anyOcean);
+        int squidWeight = Math.max(0, plugin.getConfig().getInt("fishing.anchor-hook.mob-weights.squid", 5));
+        int dolphinWeight = Math.max(0, plugin.getConfig().getInt("fishing.anchor-hook.mob-weights.dolphin", 5));
+        pool.add(CaughtResult.mob(EntityType.SQUID), squidWeight, ReelBiomes.JUNK_RIVER.contains(biome));
+        pool.add(CaughtResult.mob(EntityType.DOLPHIN), dolphinWeight, anyOcean);
         pool.add(CaughtResult.mob(EntityType.GLOW_SQUID), 20, loc.getBlockY() <= 32);
         pool.add(CaughtResult.mob(EntityType.FROG), 20, ReelBiomes.PERMITS_FROGS.contains(biome));
         if ("fiber_line".equals(lineId)) {

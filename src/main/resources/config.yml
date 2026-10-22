@@ -115,6 +115,10 @@ weather-radio:
 
 fishing:
   debug: false                          # log selected catch category and resolved result
+  anchor-hook:
+    mob-weights:                        # weighted among eligible catches; 5 is about 4.8% in a typical river/ocean
+      squid: 5
+      dolphin: 5
   category-weights:
     default:                            # relative weights for standard fishing
       junk: 10

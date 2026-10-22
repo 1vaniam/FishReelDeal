@@ -48,7 +48,7 @@ public final class FishingLootResolver implements Listener {
         this.barrels = barrels;
         this.junkLoot = new JunkLoot(items);
         this.mineralLoot = new MineralLoot();
-        this.fishLoot = new FishLoot(items);
+        this.fishLoot = new FishLoot(plugin, items);
         this.treasureLoot = new TreasureLoot(items);
     }
 
