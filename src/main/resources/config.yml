@@ -288,6 +288,10 @@ barrel-catch:
       weight: 2
       min-amount: 1
       max-amount: 1
+    - material: HEART_OF_THE_SEA
+      weight: 3
+      min-amount: 1
+      max-amount: 1
   placeholder-loot: CHEST               # fallback if the loot table is empty or invalid
   hitbox-mob: TURTLE                    # invisible hitbox; the visible model is a vanilla barrel
   hitbox-scale: 0.8

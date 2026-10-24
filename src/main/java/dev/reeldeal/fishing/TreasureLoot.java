@@ -24,7 +24,6 @@ public final class TreasureLoot {
         pool.add(enchantedBook(random), 65);
         pool.add(new ItemStack(Material.NAUTILUS_SHELL), 15);
         pool.add(items.create("fiber"), 15);
-        pool.add(new ItemStack(Material.HEART_OF_THE_SEA), 3);
 
         ItemStack hookItem = resolveHookSlot(catchLocation);
         if (hookItem != null) {

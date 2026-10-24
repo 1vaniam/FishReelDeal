@@ -16,7 +16,12 @@ import dev.reeldeal.weather.WeatherEventManager;
 import dev.reeldeal.weather.WeatherRadioManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.ArrayList;
+import java.util.Map;
+
 public final class ReelDealPlugin extends JavaPlugin {
+
+    private static final String BARREL_HEART_MIGRATION = "internal-migrations.barrel-heart-of-the-sea";
 
     private ItemRegistry itemRegistry;
     private FishingRodFactory rodFactory;
@@ -91,11 +96,40 @@ public final class ReelDealPlugin extends JavaPlugin {
 
     public void reload() {
         reloadConfig();
+        mergeConfigDefaults();
         itemRegistry.load();
         if (hookedFish != null) {
             hookedFish.reload();
         }
         new RecipeRegistrar(this, itemRegistry, rodFactory).registerAll();
+    }
+
+    /** Adds new scalar defaults and performs one-time migrations for list-based settings. */
+    private void mergeConfigDefaults() {
+        var config = getConfig();
+        config.options().copyDefaults(true);
+
+        if (!config.getBoolean(BARREL_HEART_MIGRATION, false)) {
+            String lootPath = "barrel-catch.loot-table";
+            var lootTable = new ArrayList<>(config.getMapList(lootPath));
+            boolean alreadyPresent = lootTable.stream().anyMatch(entry -> {
+                Object material = entry.get("material");
+                if (material == null) return false;
+                String id = String.valueOf(material).toUpperCase(java.util.Locale.ROOT);
+                return id.equals("HEART_OF_THE_SEA") || id.equals("MINECRAFT:HEART_OF_THE_SEA");
+            });
+            if (!alreadyPresent) {
+                lootTable.add(Map.of(
+                        "material", "HEART_OF_THE_SEA",
+                        "weight", 3,
+                        "min-amount", 1,
+                        "max-amount", 1));
+                config.set(lootPath, lootTable);
+            }
+            config.set(BARREL_HEART_MIGRATION, true);
+        }
+
+        saveConfig();
     }
 
     public ItemRegistry items() {
