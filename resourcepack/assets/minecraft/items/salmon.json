@@ -1,0 +1,251 @@
+{
+  "model": {
+    "type": "minecraft:range_dispatch",
+    "property": "minecraft:custom_model_data",
+    "index": 0,
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/salmon"
+    },
+    "entries": [
+      {
+        "threshold": 22,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/amberjack"
+        }
+      },
+      {
+        "threshold": 23,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/angelfish"
+        }
+      },
+      {
+        "threshold": 24,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/arapaima"
+        }
+      },
+      {
+        "threshold": 25,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/clownfish"
+        }
+      },
+      {
+        "threshold": 26,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/flounder"
+        }
+      },
+      {
+        "threshold": 27,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/grouper"
+        }
+      },
+      {
+        "threshold": 28,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/haddock"
+        }
+      },
+      {
+        "threshold": 29,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/halibut"
+        }
+      },
+      {
+        "threshold": 30,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/koi"
+        }
+      },
+      {
+        "threshold": 31,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/lobster"
+        }
+      },
+      {
+        "threshold": 32,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/pufferfish"
+        }
+      },
+      {
+        "threshold": 33,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/pupfish"
+        }
+      },
+      {
+        "threshold": 34,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/red_snapper"
+        }
+      },
+      {
+        "threshold": 35,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/walleye"
+        }
+      },
+      {
+        "threshold": 36,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/eel"
+        }
+      },
+      {
+        "threshold": 37,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/manta_ray"
+        }
+      },
+      {
+        "threshold": 38,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/white_fish"
+        }
+      },
+      {
+        "threshold": 39,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/mackerel"
+        }
+      },
+      {
+        "threshold": 40,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/city_fish"
+        }
+      },
+      {
+        "threshold": 41,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/nemo_fish"
+        }
+      },
+      {
+        "threshold": 42,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/dory_fish"
+        }
+      },
+      {
+        "threshold": 43,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/marlin_fish"
+        }
+      },
+      {
+        "threshold": 44,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/damselfish"
+        }
+      },
+      {
+        "threshold": 45,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/frost_minnow"
+        }
+      },
+      {
+        "threshold": 46,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/hemopiranha"
+        }
+      },
+      {
+        "threshold": 47,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/neon_tetra"
+        }
+      },
+      {
+        "threshold": 48,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/octopus"
+        }
+      },
+      {
+        "threshold": 49,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/tiger_trout"
+        }
+      },
+      {
+        "threshold": 50,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/midnight_squid"
+        }
+      },
+      {
+        "threshold": 51,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/prismite"
+        }
+      },
+      {
+        "threshold": 52,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/blue_jellyfish"
+        }
+      },
+      {
+        "threshold": 53,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/red_jellyfish"
+        }
+      },
+      {
+        "threshold": 54,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/pink_jellyfish"
+        }
+      },
+      {
+        "threshold": 55,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/honeyfin"
+        }
+      }
+    ]
+  }
+}

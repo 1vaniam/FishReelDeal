@@ -24,6 +24,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import dev.reeldeal.item.ItemRegistry;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -41,6 +42,7 @@ import java.util.UUID;
 public final class BarrelCatchManager implements Listener {
 
     private final Plugin plugin;
+    private final ItemRegistry items;
     private final DisplayFollowTicker displayTicker;
     private final Map<UUID, ActiveBarrel> active = new HashMap<>();
     private final Random lootRandom = new Random();
@@ -48,10 +50,12 @@ public final class BarrelCatchManager implements Listener {
 
     private static final NamespacedKey DROP_OWNER_KEY = new NamespacedKey("reel", "barrel_drop_owner");
 
-    private record BarrelLoot(Material material, int minAmount, int maxAmount) {
+    private record BarrelLoot(ItemStack item, int minAmount, int maxAmount) {
         ItemStack roll(Random random) {
             int amount = minAmount + random.nextInt(maxAmount - minAmount + 1);
-            return new ItemStack(material, amount);
+            ItemStack result = item.clone();
+            result.setAmount(amount);
+            return result;
         }
     }
 
@@ -62,9 +66,10 @@ public final class BarrelCatchManager implements Listener {
         }
     }
 
-    public BarrelCatchManager(Plugin plugin, DisplayFollowTicker displayTicker) {
+    public BarrelCatchManager(Plugin plugin, DisplayFollowTicker displayTicker, ItemRegistry items) {
         this.plugin = plugin;
         this.displayTicker = displayTicker;
+        this.items = items;
     }
 
     public boolean shouldCatch(String hookId, Random random) {
@@ -107,10 +112,9 @@ public final class BarrelCatchManager implements Listener {
             plugin.getLogger().warning("barrel-catch.hitbox-mob must be a living entity type.");
             return false;
         }
+        hitbox.setAI(false);
         if (hitbox instanceof Mob mob) {
             mob.setAware(false);
-        } else {
-            hitbox.setAI(false);
         }
         hitbox.setGravity(true);
         hitbox.setCollidable(true);
@@ -282,22 +286,29 @@ public final class BarrelCatchManager implements Listener {
     private ItemStack rollBarrelLoot() {
         WeightedPool<BarrelLoot> pool = new WeightedPool<>();
         for (Map<?, ?> entry : plugin.getConfig().getMapList("barrel-catch.loot-table")) {
-            Object configuredMaterial = entry.get("material");
-            Material material = configuredMaterial == null
-                    ? null : Material.matchMaterial(String.valueOf(configuredMaterial));
-            if (material == null || !material.isItem() || material.getMaxStackSize() < 1) {
-                continue;
+            ItemStack item;
+            Object configuredItem = entry.get("item");
+            if (configuredItem != null) {
+                String itemId = String.valueOf(configuredItem);
+                if (!items.ids().contains(itemId) || !"hook".equals(items.categoryOf(itemId))) continue;
+                item = items.create(itemId);
+            } else {
+                Object configuredMaterial = entry.get("material");
+                Material material = configuredMaterial == null
+                        ? null : Material.matchMaterial(String.valueOf(configuredMaterial));
+                if (material == null || !material.isItem() || material.getMaxStackSize() < 1) continue;
+                item = new ItemStack(material);
             }
 
             int weight = configInt(entry.get("weight"), 1);
             if (weight < 1) {
                 continue;
             }
-            int stackLimit = material.getMaxStackSize();
+            int stackLimit = item.getMaxStackSize();
             int minAmount = Math.max(1, Math.min(stackLimit, configInt(entry.get("min-amount"), 1)));
             int maxAmount = Math.max(minAmount,
                     Math.min(stackLimit, configInt(entry.get("max-amount"), minAmount)));
-            pool.add(new BarrelLoot(material, minAmount, maxAmount), weight);
+            pool.add(new BarrelLoot(item, minAmount, maxAmount), weight);
         }
 
         BarrelLoot selected = pool.pick(lootRandom);

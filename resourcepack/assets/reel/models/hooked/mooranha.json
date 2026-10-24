@@ -1,0 +1,124 @@
+{
+  "parent": "fathoms:block/chopping_block/fish/mooranha",
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.55,
+        0.55,
+        0.55
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        2,
+        0
+      ],
+      "scale": [
+        0.443,
+        0.443,
+        0.443
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        -6,
+        4.25,
+        0.25
+      ],
+      "scale": [
+        0.998,
+        0.998,
+        0.998
+      ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        6,
+        4.25,
+        0.25
+      ],
+      "scale": [
+        0.998,
+        0.998,
+        0.998
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        -9,
+        6.5,
+        0
+      ],
+      "scale": [
+        0.998,
+        0.998,
+        0.998
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        9,
+        6.5,
+        0
+      ],
+      "scale": [
+        0.998,
+        0.998,
+        0.998
+      ]
+    }
+  }
+}

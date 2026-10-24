@@ -22,6 +22,8 @@ import java.util.Map;
 public final class ReelDealPlugin extends JavaPlugin {
 
     private static final String BARREL_HEART_MIGRATION = "internal-migrations.barrel-heart-of-the-sea";
+    private static final String BARREL_XP_HOOK_MIGRATION = "internal-migrations.barrel-xp-hook";
+    private static final String XP_HOOK_TIER_BONUS_MIGRATION = "internal-migrations.xp-hook-tier-bonuses";
 
     private ItemRegistry itemRegistry;
     private FishingRodFactory rodFactory;
@@ -47,7 +49,7 @@ public final class ReelDealPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new WeatherRadioManager(this, itemRegistry, weatherEvents), this);
         getServer().getPluginManager().registerEvents(workbench, this);
         this.displayTicker = new DisplayFollowTicker(this);
-        this.barrelCatches = new BarrelCatchManager(this, displayTicker);
+        this.barrelCatches = new BarrelCatchManager(this, displayTicker, itemRegistry);
         getServer().getPluginManager().registerEvents(barrelCatches, this);
         getServer().getPluginManager().registerEvents(new FishingLootResolver(this, itemRegistry, rodFactory, barrelCatches), this);
 
@@ -127,6 +129,33 @@ public final class ReelDealPlugin extends JavaPlugin {
                 config.set(lootPath, lootTable);
             }
             config.set(BARREL_HEART_MIGRATION, true);
+        }
+
+        if (!config.getBoolean(BARREL_XP_HOOK_MIGRATION, false)) {
+            String lootPath = "barrel-catch.loot-table";
+            var lootTable = new ArrayList<>(config.getMapList(lootPath));
+            boolean alreadyPresent = lootTable.stream().anyMatch(entry ->
+                    "xp_hook".equalsIgnoreCase(String.valueOf(entry.get("item"))));
+            if (!alreadyPresent) {
+                lootTable.add(Map.of("item", "xp_hook", "weight", 1,
+                        "min-amount", 1, "max-amount", 1));
+                config.set(lootPath, lootTable);
+            }
+            config.set(BARREL_XP_HOOK_MIGRATION, true);
+        }
+
+        if (!config.getBoolean(XP_HOOK_TIER_BONUS_MIGRATION, false)) {
+            String path = "fishing.xp-hook.pyrofishing-tier-bonuses.";
+            String[] tiers = {"bronze", "silver", "gold", "diamond", "platinum", "mythical"};
+            int[] previousDefaults = {3, 4, 5, 6, 8, 10};
+            int[] updatedDefaults = {5, 10, 20, 30, 100, 1000};
+            for (int i = 0; i < tiers.length; i++) {
+                String tierPath = path + tiers[i];
+                if (config.getInt(tierPath, previousDefaults[i]) == previousDefaults[i]) {
+                    config.set(tierPath, updatedDefaults[i]);
+                }
+            }
+            config.set(XP_HOOK_TIER_BONUS_MIGRATION, true);
         }
 
         saveConfig();

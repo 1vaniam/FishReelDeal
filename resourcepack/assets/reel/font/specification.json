@@ -1,0 +1,11 @@
+{
+    "providers": [
+        {
+            "type": "bitmap",
+            "chars": ["\u0001\u0002"],
+            "file": "reel:font/specification.png",
+            "ascent": 7,
+            "height": 8
+        }
+    ]
+}

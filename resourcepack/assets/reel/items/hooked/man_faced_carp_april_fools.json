@@ -1,0 +1,48 @@
+{
+  "model": {
+    "type": "minecraft:range_dispatch",
+    "property": "minecraft:custom_model_data",
+    "index": 1,
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "reel:hooked/man_faced_carp_april_fools"
+    },
+    "entries": [
+      {
+        "threshold": 0,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/man_faced_carp_april_fools_tiny"
+        }
+      },
+      {
+        "threshold": 1,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/man_faced_carp_april_fools_small"
+        }
+      },
+      {
+        "threshold": 2,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/man_faced_carp_april_fools_medium"
+        }
+      },
+      {
+        "threshold": 3,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/man_faced_carp_april_fools_large"
+        }
+      },
+      {
+        "threshold": 4,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/man_faced_carp_april_fools_trophy"
+        }
+      }
+    ]
+  }
+}

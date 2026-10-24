@@ -6,6 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,9 +14,11 @@ import java.util.Random;
 
 public final class TreasureLoot {
 
+    private final Plugin plugin;
     private final ItemRegistry items;
 
-    public TreasureLoot(ItemRegistry items) {
+    public TreasureLoot(Plugin plugin, ItemRegistry items) {
+        this.plugin = plugin;
         this.items = items;
     }
 
@@ -37,6 +40,12 @@ public final class TreasureLoot {
     private ItemStack resolveHookSlot(Location loc) {
         if (loc.getBlockY() <= 48) {
             return items.create("cluster_hook");
+        }
+        int skyhookMinY = Math.max(0, plugin.getConfig().getInt("fishing.skyhook.minimum-y", 128));
+        boolean requireSky = plugin.getConfig().getBoolean("fishing.skyhook.require-open-sky", true);
+        boolean exposed = loc.getBlockY() >= loc.getWorld().getHighestBlockYAt(loc.getBlockX(), loc.getBlockZ());
+        if (loc.getBlockY() >= skyhookMinY && (!requireSky || exposed)) {
+            return items.create("skyhook");
         }
         var biome = loc.getBlock().getBiome();
         if (ReelBiomes.JUNK_OCEAN.contains(biome) || ReelBiomes.JUNK_WARM_OCEAN.contains(biome)) {

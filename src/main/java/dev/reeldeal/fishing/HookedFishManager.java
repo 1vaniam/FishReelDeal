@@ -165,8 +165,8 @@ public final class HookedFishManager implements Listener {
             return false;
         }
 
-        // Hitbox mob: invisible and silent. setAware(false) removes its AI but keeps gravity, block and
-        // entity collisions and knockback, so it can be flung. Liquids never block movement.
+        // Hitbox mob: disable AI/pathfinding but retain gravity, block and entity collisions, and knockback.
+        // That keeps it stationary unless it is flung or pushed. Liquids never block movement.
         EntityType type;
         try {
             type = EntityType.valueOf(cfg.getString("hooked-fish.hitbox-mob", "TURTLE").toUpperCase(Locale.ROOT));
@@ -180,10 +180,9 @@ public final class HookedFishManager implements Listener {
             plugin.getLogger().warning("hooked-fish.hitbox-mob must be a living entity type.");
             return false;
         }
+        mob.setAI(false);
         if (mob instanceof Mob m) {
             m.setAware(false);
-        } else {
-            mob.setAI(false);
         }
         mob.setGravity(true);
         mob.setCollidable(true);

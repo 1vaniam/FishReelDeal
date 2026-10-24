@@ -1,0 +1,258 @@
+{
+  "model": {
+    "type": "minecraft:range_dispatch",
+    "property": "minecraft:custom_model_data",
+    "index": 0,
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/cod"
+    },
+    "entries": [
+      {
+        "threshold": 35,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/bass"
+        }
+      },
+      {
+        "threshold": 36,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/bream"
+        }
+      },
+      {
+        "threshold": 37,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/carp"
+        }
+      },
+      {
+        "threshold": 38,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/catfish"
+        }
+      },
+      {
+        "threshold": 39,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/char"
+        }
+      },
+      {
+        "threshold": 40,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/cod"
+        }
+      },
+      {
+        "threshold": 41,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/eel"
+        }
+      },
+      {
+        "threshold": 42,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/gar"
+        }
+      },
+      {
+        "threshold": 43,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/minnow"
+        }
+      },
+      {
+        "threshold": 44,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/perch"
+        }
+      },
+      {
+        "threshold": 45,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/pike"
+        }
+      },
+      {
+        "threshold": 46,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/salmon"
+        }
+      },
+      {
+        "threshold": 47,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/shrimp"
+        }
+      },
+      {
+        "threshold": 48,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/tilapia"
+        }
+      },
+      {
+        "threshold": 49,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/trout"
+        }
+      },
+      {
+        "threshold": 50,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/tuna"
+        }
+      },
+      {
+        "threshold": 51,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/piranha"
+        }
+      },
+      {
+        "threshold": 52,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/atlantic_cod"
+        }
+      },
+      {
+        "threshold": 53,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/chaos_fish"
+        }
+      },
+      {
+        "threshold": 54,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/nuptuna"
+        }
+      },
+      {
+        "threshold": 55,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/red_mullet"
+        }
+      },
+      {
+        "threshold": 56,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/sardine"
+        }
+      },
+      {
+        "threshold": 57,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/sunfish"
+        }
+      },
+      {
+        "threshold": 58,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/squid"
+        }
+      },
+      {
+        "threshold": 59,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/blackfin_tuna"
+        }
+      },
+      {
+        "threshold": 60,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/glacierfish"
+        }
+      },
+      {
+        "threshold": 61,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/lingcod"
+        }
+      },
+      {
+        "threshold": 62,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/sturgeon"
+        }
+      },
+      {
+        "threshold": 63,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/stonefish"
+        }
+      },
+      {
+        "threshold": 64,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/herring"
+        }
+      },
+      {
+        "threshold": 65,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/ice_pip"
+        }
+      },
+      {
+        "threshold": 66,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/mud_shark"
+        }
+      },
+      {
+        "threshold": 67,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/greengill"
+        }
+      },
+      {
+        "threshold": 68,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/ordon_catfish"
+        }
+      },
+      {
+        "threshold": 69,
+        "model": {
+          "type": "minecraft:model",
+          "model": "fish:item/seabass"
+        }
+      }
+    ]
+  }
+}

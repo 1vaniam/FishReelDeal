@@ -1,0 +1,109 @@
+{
+	"credit": "Made with Blockbench",
+	"texture_size": [32, 32],
+	"textures": {
+		"0": "fathoms:block/chopping_block/fish/aberration/gleaming_bream",
+		"1": "fathoms:block/chopping_block/fish/aberration/gleaming_bream_eyes",
+		"particle": "fathoms:block/chopping_block/fish/aberration/gleaming_bream"
+	},
+	"elements": [
+		{
+			"name": "Body",
+			"from": [2, 0, 5],
+			"to": [12, 6, 10],
+			"rotation": {"angle": 0, "axis": "y", "origin": [7, 3, 8]},
+			"faces": {
+				"north": {"uv": [2.5, 2.5, 7.5, 5.5], "texture": "#0"},
+				"east": {"uv": [0, 2.5, 2.5, 5.5], "texture": "#0"},
+				"south": {"uv": [7.5, 2.5, 2.5, 5.5], "texture": "#0"},
+				"west": {"uv": [7.5, 2.5, 10, 5.5], "texture": "#0"},
+				"up": {"uv": [7.5, 2.5, 2.5, 0], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Eye",
+			"from": [7.995, -0.005, 4.995],
+			"to": [13.005, 5.005, 10.005],
+			"light_emission": 15,
+			"rotation": {"angle": 0, "axis": "y", "origin": [13, 3, 8]},
+			"faces": {
+				"north": {"uv": [0, 0, 5, 5], "texture": "#1"},
+				"south": {"uv": [0, 0, 5, 5], "texture": "#1"}
+			}
+		},
+		{
+			"name": "Mouth",
+			"from": [12, 0, 5],
+			"to": [14, 4, 10],
+			"rotation": {"angle": 0, "axis": "y", "origin": [13, 2, 8]},
+			"faces": {
+				"north": {"uv": [2.5, 6.5, 3.5, 8.5], "texture": "#0"},
+				"east": {"uv": [0, 6.5, 2.5, 8.5], "texture": "#0"},
+				"south": {"uv": [3.5, 6.5, 2.5, 8.5], "texture": "#0"},
+				"up": {"uv": [2.5, 6.5, 0, 5.5], "rotation": 90, "texture": "#0"}
+			}
+		},
+		{
+			"name": "Fin",
+			"from": [-1, 0, 7.5],
+			"to": [13, 10, 7.5],
+			"rotation": {"angle": 0, "axis": "y", "origin": [6, 5, 7.5]},
+			"faces": {
+				"north": {"uv": [0.5, 10.5, 7.5, 15.5], "texture": "#0"},
+				"south": {"uv": [7.5, 10.5, 0.5, 15.5], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Fin",
+			"from": [4, 1, 1],
+			"to": [8, 1, 5],
+			"rotation": {"angle": -22.5, "axis": "x", "origin": [6, 1, 5]},
+			"faces": {
+				"up": {"uv": [8, 13.5, 10, 15.5], "texture": "#0"},
+				"down": {"uv": [8, 15.5, 10, 13.5], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Fin",
+			"from": [4, 1, 10],
+			"to": [8, 1, 14],
+			"rotation": {"angle": 22.5, "axis": "x", "origin": [6, 1, 10]},
+			"faces": {
+				"up": {"uv": [8, 15.5, 10, 13.5], "texture": "#0"},
+				"down": {"uv": [8, 13.5, 10, 15.5], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Glow",
+			"from": [3.995, 5.995, 7.495],
+			"to": [10.005, 8.005, 7.505],
+			"light_emission": 15,
+			"rotation": {"angle": 0, "axis": "y", "origin": [7, 7, 7.5]},
+			"faces": {
+				"north": {"uv": [0, 8.5, 3, 9.5], "texture": "#0"},
+				"south": {"uv": [3, 8.5, 0, 9.5], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Glow",
+			"from": [3.995, 0.995, 4.995],
+			"to": [8.005, 3.005, 10.005],
+			"light_emission": 15,
+			"rotation": {"angle": 0, "axis": "y", "origin": [6, 2, 7.5]},
+			"faces": {
+				"north": {"uv": [5, 8.5, 3, 9.5], "texture": "#0"},
+				"south": {"uv": [5, 8.5, 3, 9.5], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Glow",
+			"from": [8.995, 5.995, 6.995],
+			"to": [11.005, 6.005, 8.005],
+			"light_emission": 15,
+			"rotation": {"angle": 0, "axis": "y", "origin": [12.5, 6, 7.5]},
+			"faces": {
+				"up": {"uv": [4, 9.5, 5, 10], "rotation": 180, "texture": "#0"}
+			}
+		}
+	]
+}

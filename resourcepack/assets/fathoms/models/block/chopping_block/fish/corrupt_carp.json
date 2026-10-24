@@ -1,0 +1,66 @@
+{
+	"format_version": "1.21.6",
+	"credit": "Made with Blockbench",
+	"texture_size": [32, 32],
+	"textures": {
+		"0": "fathoms:block/chopping_block/fish/corrupt_carp",
+		"particle": "fathoms:block/chopping_block/fish/corrupt_carp"
+	},
+	"elements": [
+		{
+			"name": "Body",
+			"from": [2, 0, 5],
+			"to": [12, 6, 10],
+			"rotation": {"angle": 0, "axis": "y", "origin": [7, 3, 8]},
+			"faces": {
+				"north": {"uv": [2.5, 2.5, 7.5, 5.5], "texture": "#0"},
+				"east": {"uv": [0, 2.5, 2.5, 5.5], "texture": "#0"},
+				"south": {"uv": [7.5, 2.5, 2.5, 5.5], "texture": "#0"},
+				"west": {"uv": [7.5, 2.5, 10, 5.5], "texture": "#0"},
+				"up": {"uv": [7.5, 2.5, 2.5, 0], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Mouth",
+			"from": [12, 0, 5],
+			"to": [14, 4, 10],
+			"rotation": {"angle": 0, "axis": "y", "origin": [13, 2, 8]},
+			"faces": {
+				"north": {"uv": [2.5, 6.5, 3.5, 8.5], "texture": "#0"},
+				"east": {"uv": [0, 6.5, 2.5, 8.5], "texture": "#0"},
+				"south": {"uv": [3.5, 6.5, 2.5, 8.5], "texture": "#0"},
+				"up": {"uv": [2.5, 6.5, 0, 5.5], "rotation": 90, "texture": "#0"}
+			}
+		},
+		{
+			"name": "Fin",
+			"from": [-2, 0, 7.5],
+			"to": [12, 10, 7.5],
+			"rotation": {"angle": 0, "axis": "y", "origin": [5, 5, 7.5]},
+			"faces": {
+				"north": {"uv": [0.5, 10.5, 7.5, 15.5], "texture": "#0"},
+				"south": {"uv": [7.5, 10.5, 0.5, 15.5], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Fin",
+			"from": [4, 2, 1],
+			"to": [8, 2, 5],
+			"rotation": {"angle": -45, "axis": "x", "origin": [6, 2, 5]},
+			"faces": {
+				"up": {"uv": [8, 13.5, 10, 15.5], "texture": "#0"},
+				"down": {"uv": [8, 15.5, 10, 13.5], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Fin",
+			"from": [4, 2, 10],
+			"to": [8, 2, 14],
+			"rotation": {"angle": 45, "axis": "x", "origin": [6, 2, 10]},
+			"faces": {
+				"up": {"uv": [8, 15.5, 10, 13.5], "texture": "#0"},
+				"down": {"uv": [8, 13.5, 10, 15.5], "texture": "#0"}
+			}
+		}
+	]
+}

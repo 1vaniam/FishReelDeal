@@ -1,0 +1,89 @@
+{
+	"credit": "Made with Blockbench",
+	"texture_size": [32, 32],
+	"textures": {
+		"0": "fathoms:block/chopping_block/fish/aberration/carcinomalocaris",
+		"particle": "fathoms:block/chopping_block/fish/aberration/carcinomalocaris"
+	},
+	"elements": [
+		{
+			"name": "Body",
+			"from": [2, 0, 4],
+			"to": [14, 2, 11],
+			"rotation": {"angle": 0, "axis": "z", "origin": [2, 0, 7.5]},
+			"faces": {
+				"north": {"uv": [3.5, 3.5, 9.5, 4.5], "texture": "#0"},
+				"east": {"uv": [0, 3.5, 3.5, 4.5], "texture": "#0"},
+				"south": {"uv": [9.5, 3.5, 3.5, 4.5], "texture": "#0"},
+				"west": {"uv": [9.5, 3.5, 13, 4.5], "texture": "#0"},
+				"up": {"uv": [9.5, 0, 3.5, 3.5], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Frills",
+			"from": [3, 1, 1],
+			"to": [11, 1, 14],
+			"rotation": {"angle": 0, "axis": "z", "origin": [2, 0, 7.5]},
+			"faces": {
+				"up": {"uv": [5.5, 4.5, 1.5, 11], "texture": "#0"},
+				"down": {"uv": [5.5, 4.5, 1.5, 11], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Tail",
+			"from": [-7.57611, 1.61836, 5],
+			"to": [1.42389, 1.61836, 10],
+			"rotation": {"angle": -22.5, "axis": "z", "origin": [2, 0, 7.5]},
+			"faces": {
+				"up": {"uv": [5.5, 9, 8, 4.5], "rotation": 90, "texture": "#0"},
+				"down": {"uv": [8, 9, 5.5, 4.5], "rotation": 90, "texture": "#0"}
+			}
+		},
+		{
+			"name": "Eye",
+			"from": [11, 2, 4],
+			"to": [13, 5, 6],
+			"rotation": {"angle": 0, "axis": "z", "origin": [2, 0, 7.5]},
+			"faces": {
+				"north": {"uv": [0, 0, 1, 1.5], "texture": "#0"},
+				"east": {"uv": [1, 0, 0, 1.5], "texture": "#0"},
+				"south": {"uv": [0, 0, 1, 1.5], "texture": "#0"},
+				"west": {"uv": [0, 0, 1, 1.5], "texture": "#0"},
+				"up": {"uv": [0, 0, 1, 1], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Eye",
+			"from": [11, 2, 9],
+			"to": [13, 5, 11],
+			"rotation": {"angle": 0, "axis": "z", "origin": [2, 0, 7.5]},
+			"faces": {
+				"north": {"uv": [0, 0, 1, 1.5], "texture": "#0"},
+				"east": {"uv": [1, 0, 0, 1.5], "texture": "#0"},
+				"south": {"uv": [0, 0, 1, 1.5], "texture": "#0"},
+				"west": {"uv": [0, 0, 1, 1.5], "texture": "#0"},
+				"up": {"uv": [0, 0, 1, 1], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Arm Things",
+			"from": [14, 0, 5],
+			"to": [20, 3, 10],
+			"rotation": {"angle": 0, "axis": "z", "origin": [14, 0, 7.5]},
+			"faces": {
+				"north": {"uv": [0, 4.5, 1.5, 7.5], "rotation": 90, "texture": "#0"},
+				"south": {"uv": [1.5, 4.5, 0, 7.5], "rotation": 270, "texture": "#0"}
+			}
+		},
+		{
+			"name": "Arm Things inverted",
+			"from": [20, 3, 10],
+			"to": [14, 0, 5],
+			"rotation": {"angle": 0, "axis": "z", "origin": [14, 0, 7.5]},
+			"faces": {
+				"north": {"uv": [1.5, 7.5, 0, 4.5], "rotation": 90, "texture": "#0"},
+				"south": {"uv": [0, 7.5, 1.5, 4.5], "rotation": 270, "texture": "#0"}
+			}
+		}
+	]
+}

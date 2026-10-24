@@ -1,0 +1,48 @@
+{
+  "model": {
+    "type": "minecraft:range_dispatch",
+    "property": "minecraft:custom_model_data",
+    "index": 1,
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "reel:hooked/seabass"
+    },
+    "entries": [
+      {
+        "threshold": 0,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/seabass_tiny"
+        }
+      },
+      {
+        "threshold": 1,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/seabass_small"
+        }
+      },
+      {
+        "threshold": 2,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/seabass_medium"
+        }
+      },
+      {
+        "threshold": 3,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/seabass_large"
+        }
+      },
+      {
+        "threshold": 4,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/seabass_trophy"
+        }
+      }
+    ]
+  }
+}

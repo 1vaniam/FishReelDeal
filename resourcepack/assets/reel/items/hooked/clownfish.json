@@ -1,0 +1,83 @@
+{
+  "model": {
+    "type": "minecraft:range_dispatch",
+    "property": "minecraft:custom_model_data",
+    "index": 1,
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "reel:hooked/clownfish"
+    },
+    "entries": [
+      {
+        "threshold": 0,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/clownfish_s0"
+        }
+      },
+      {
+        "threshold": 1,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/clownfish_s1"
+        }
+      },
+      {
+        "threshold": 2,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/clownfish_s2"
+        }
+      },
+      {
+        "threshold": 3,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/clownfish_s3"
+        }
+      },
+      {
+        "threshold": 4,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/clownfish_s4"
+        }
+      },
+      {
+        "threshold": 5,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/clownfish_s5"
+        }
+      },
+      {
+        "threshold": 6,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/clownfish_s6"
+        }
+      },
+      {
+        "threshold": 7,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/clownfish_s7"
+        }
+      },
+      {
+        "threshold": 8,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/clownfish_s8"
+        }
+      },
+      {
+        "threshold": 9,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/clownfish_s9"
+        }
+      }
+    ]
+  }
+}

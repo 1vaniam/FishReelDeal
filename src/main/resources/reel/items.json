@@ -397,6 +397,84 @@
     },
     "category": "fish"
   },
+  "xp_hook": {
+    "base_item": "minecraft:experience_bottle",
+    "item_name": {
+      "text": "XP Hook"
+    },
+    "item_model": "reel:xp_hook",
+    "max_stack_size": 1,
+    "rarity": "rare",
+    "lore": [
+      "",
+      "Gain bonus experience when reeling in a catch.",
+      "",
+      "Reel Deal"
+    ],
+    "food": null,
+    "consumable": null,
+    "category": "hook"
+  },
+  "skyhook": {
+    "base_item": "minecraft:phantom_membrane",
+    "item_name": {
+      "translate": "item.reel.skyhook"
+    },
+    "item_model": "reel:skyhook",
+    "max_stack_size": 1,
+    "rarity": "rare",
+    "lore": [
+      "",
+      [
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": "\u0001",
+          "color": "white",
+          "font": "reel:specification",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "translate": "tooltip.reel.when_applied_as",
+          "with": [
+            {
+              "translate": "tooltip.reel.hook",
+              "color": "gray",
+              "font": "minecraft:default",
+              "italic": false
+            }
+          ],
+          "color": "dark_gray",
+          "font": "minecraft:default",
+          "italic": false
+        },
+        {
+          "text": " ",
+          "color": "white",
+          "font": "minecraft:default",
+          "italic": false
+        }
+      ],
+      "",
+      "§l §r§7   Catches skyborne supplies ",
+      "§l §r§7   while fishing in high, open air. ",
+      "",
+      "§r§9Reel Deal"
+    ],
+    "food": null,
+    "consumable": null,
+    "category": "hook"
+  },
   "iron_hook": {
     "base_item": "minecraft:armadillo_spawn_egg",
     "item_name": {

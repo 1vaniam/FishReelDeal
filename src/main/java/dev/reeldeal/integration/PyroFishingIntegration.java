@@ -159,6 +159,16 @@ public final class PyroFishingIntegration implements Listener {
             boolean reelRod = rods.isConstructed(rod);
             boolean anchorHook = reelRod && "reel:anchor_hook".equals(rods.hookOf(rod));
             String hookId = reelRod ? strip(rods.hookOf(rod)) : null;
+            if ("xp_hook".equals(hookId)
+                    && plugin.getConfig().getBoolean("pyrofishing-integration.enabled", true)) {
+                Object pyroTier = null;
+                try {
+                    pyroTier = invoke(event, "getTier");
+                } catch (ReflectiveOperationException missingTierMethod) {
+                    log("PyroFishing catch event has no getTier() method; using the XP Hook base bonus.");
+                }
+                applyTierScaledXp(player, pyroTier);
+            }
             String model = replaceCatch && hooked.enabled() ? hooked.modelFor(fish) : null;
             Location catchLocation = hooked.catchLocation(player);
             boolean suppressThroughEvent = model != null && catchLocation != null;
@@ -213,6 +223,43 @@ public final class PyroFishingIntegration implements Listener {
             Bukkit.getLogger().warning("[ReelDeal] PyroFishingPro integration reflection call failed "
                     + "(likely an API shape change on their end): " + e);
         }
+    }
+
+    /** The vanilla fishing event already gives the XP Hook's base bonus; add only the tier difference. */
+    private void applyTierScaledXp(Player player, Object pyroTier) {
+        String tierKey = tierKey(pyroTier);
+        if (tierKey == null) {
+            log("Couldn't read PyroFishing tier for XP Hook bonus; using its base bonus only.");
+            return;
+        }
+        int baseBonus = Math.max(0, plugin.getConfig().getInt("fishing.xp-hook.bonus", 3));
+        int scaledBonus = Math.max(baseBonus,
+                plugin.getConfig().getInt("fishing.xp-hook.pyrofishing-tier-bonuses." + tierKey, baseBonus));
+        int extra = scaledBonus - baseBonus;
+        if (extra > 0) {
+            // Run after PlayerFishEvent listeners so its configured base bonus is already included.
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (player.isOnline()) {
+                    player.giveExp(extra);
+                }
+            });
+        }
+    }
+
+    private String tierKey(Object tier) {
+        if (tier == null) return null;
+        String value = String.valueOf(tier).toLowerCase(java.util.Locale.ROOT)
+                .replaceAll("[^a-z0-9]", "");
+        String[] tiers = {"bronze", "silver", "gold", "diamond", "platinum", "mythical"};
+        for (String name : tiers) {
+            if (value.contains(name)) return name;
+        }
+        if (tier instanceof Number number) {
+            int index = number.intValue();
+            if (index == 0) return tiers[0];
+            if (index >= 1 && index <= tiers.length) return tiers[index - 1];
+        }
+        return null;
     }
 
     /** Prefer Pyro's own event controls so common model catches need no inventory/entity scans. */

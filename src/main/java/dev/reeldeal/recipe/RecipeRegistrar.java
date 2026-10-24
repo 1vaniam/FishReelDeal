@@ -17,7 +17,7 @@ public final class RecipeRegistrar {
 
     private static final String[] ROD_PATTERN = {"  S", " SL", "S H"};
     public static final List<String> LINES = List.of("woven_line", "reinforced_line", "fiber_line");
-    public static final List<String> HOOKS = List.of("wooden_hook", "iron_hook", "golden_hook", "cluster_hook", "anchor_hook");
+    public static final List<String> HOOKS = List.of("wooden_hook", "iron_hook", "golden_hook", "cluster_hook", "anchor_hook", "skyhook", "xp_hook");
 
     private final Plugin plugin;
     private final ItemRegistry items;

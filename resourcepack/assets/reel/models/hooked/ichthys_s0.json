@@ -1,0 +1,124 @@
+{
+  "parent": "fathoms:block/chopping_block/fish/ichthys",
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.395,
+        0.395,
+        0.395
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        2,
+        0
+      ],
+      "scale": [
+        0.206,
+        0.206,
+        0.206
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.345,
+        0.345,
+        0.345
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        -6,
+        4.25,
+        0.25
+      ],
+      "scale": [
+        0.463,
+        0.463,
+        0.463
+      ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        6,
+        4.25,
+        0.25
+      ],
+      "scale": [
+        0.463,
+        0.463,
+        0.463
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        -9,
+        6.5,
+        0
+      ],
+      "scale": [
+        0.463,
+        0.463,
+        0.463
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        9,
+        6.5,
+        0
+      ],
+      "scale": [
+        0.463,
+        0.463,
+        0.463
+      ]
+    }
+  }
+}

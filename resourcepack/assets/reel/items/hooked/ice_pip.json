@@ -1,0 +1,48 @@
+{
+  "model": {
+    "type": "minecraft:range_dispatch",
+    "property": "minecraft:custom_model_data",
+    "index": 1,
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "reel:hooked/ice_pip"
+    },
+    "entries": [
+      {
+        "threshold": 0,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/ice_pip_tiny"
+        }
+      },
+      {
+        "threshold": 1,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/ice_pip_small"
+        }
+      },
+      {
+        "threshold": 2,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/ice_pip_medium"
+        }
+      },
+      {
+        "threshold": 3,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/ice_pip_large"
+        }
+      },
+      {
+        "threshold": 4,
+        "model": {
+          "type": "minecraft:model",
+          "model": "reel:hooked/ice_pip_trophy"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+{
+	"parent": "minecraft:item/handheld_rod",
+	"textures": {
+		"layer0": "reel:item/anchor_hook_applied"
+	}
+}

@@ -38,6 +38,7 @@ public final class FishingLootResolver implements Listener {
     private final JunkLoot junkLoot;
     private final MineralLoot mineralLoot;
     private final FishLoot fishLoot;
+    private final SkyLoot skyLoot;
     private final TreasureLoot treasureLoot;
     private final BarrelCatchManager barrels;
     private final Random random = new Random();
@@ -49,7 +50,8 @@ public final class FishingLootResolver implements Listener {
         this.junkLoot = new JunkLoot(items);
         this.mineralLoot = new MineralLoot();
         this.fishLoot = new FishLoot(plugin, items);
-        this.treasureLoot = new TreasureLoot(items);
+        this.skyLoot = new SkyLoot(plugin);
+        this.treasureLoot = new TreasureLoot(plugin, items);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -86,6 +88,11 @@ public final class FishingLootResolver implements Listener {
             return;
         }
 
+        if ("xp_hook".equals(hookId)) {
+            int bonus = Math.max(0, plugin.getConfig().getInt("fishing.xp-hook.bonus", 3));
+            event.setExpToDrop(event.getExpToDrop() + bonus);
+        }
+
         String lineId = strip(rods.lineOf(rod));
 
         CaughtResult outcome = resolveOutcome(hookId, lineId, hook, rod, loc);
@@ -116,6 +123,9 @@ public final class FishingLootResolver implements Listener {
     }
 
     private CaughtResult resolveOutcome(String hookId, String lineId, FishHook hook, ItemStack rod, Location loc) {
+        if ("skyhook".equals(hookId)) {
+            return CaughtResult.item(skyLoot.resolve(random));
+        }
         Category category = resolveCategory(hookId, hook, rod, loc);
         if (plugin.getConfig().getBoolean("fishing.debug", false)) {
             plugin.getLogger().info("Fishing category decision: hook=" + hookId + ", line=" + lineId

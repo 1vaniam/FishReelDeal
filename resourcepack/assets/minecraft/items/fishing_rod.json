@@ -1,0 +1,146 @@
+{
+	"model": {
+		"type": "minecraft:composite",
+		"models": [
+			{
+				"type": "minecraft:model",
+				"model": "reel:item/fishing_rod"
+			},
+			{
+				"type": "minecraft:condition",
+				"property": "minecraft:fishing_rod/cast",
+				"on_true": {
+					"type": "minecraft:select",
+					"property": "minecraft:custom_model_data",
+					"index": 0,
+					"cases": [
+						{
+							"when": "reel:woven_line",
+							"model": {
+								"type": "minecraft:model",
+								"model": "reel:item/woven_line_applied_cast"
+							}
+						},
+						{
+							"when": "reel:reinforced_line",
+							"model": {
+								"type": "minecraft:model",
+								"model": "reel:item/reinforced_line_applied_cast"
+							}
+						},
+						{
+							"when": "reel:fiber_line",
+							"model": {
+								"type": "minecraft:model",
+								"model": "reel:item/fiber_line_applied_cast"
+							}
+						}
+					],
+					"fallback": {
+						"type": "minecraft:model",
+						"model": "reel:item/reinforced_line_applied_cast"
+					}
+				},
+				"on_false": {
+					"type": "minecraft:select",
+					"property": "minecraft:custom_model_data",
+					"index": 0,
+					"cases": [
+						{
+							"when": "reel:woven_line",
+							"model": {
+								"type": "minecraft:model",
+								"model": "reel:item/woven_line_applied"
+							}
+						},
+						{
+							"when": "reel:reinforced_line",
+							"model": {
+								"type": "minecraft:model",
+								"model": "reel:item/reinforced_line_applied"
+							}
+						},
+						{
+							"when": "reel:fiber_line",
+							"model": {
+								"type": "minecraft:model",
+								"model": "reel:item/fiber_line_applied"
+							}
+						}
+					],
+					"fallback": {
+						"type": "minecraft:model",
+						"model": "reel:item/reinforced_line_applied"
+					}
+				}
+			},
+			{
+				"type": "minecraft:condition",
+				"property": "minecraft:fishing_rod/cast",
+				"on_true": {
+					"type": "minecraft:empty"
+				},
+				"on_false": {
+					"type": "minecraft:select",
+					"property": "minecraft:custom_model_data",
+					"index": 1,
+					"cases": [
+						{
+							"when": "reel:wooden_hook",
+							"model": {
+								"type": "minecraft:model",
+								"model": "reel:item/wooden_hook_applied"
+							}
+						},
+						{
+							"when": "reel:iron_hook",
+							"model": {
+								"type": "minecraft:model",
+								"model": "reel:item/iron_hook_applied"
+							}
+						},
+						{
+							"when": "reel:golden_hook",
+							"model": {
+								"type": "minecraft:model",
+								"model": "reel:item/golden_hook_applied"
+							}
+						},
+						{
+							"when": "reel:cluster_hook",
+							"model": {
+								"type": "minecraft:model",
+								"model": "reel:item/cluster_hook_applied"
+							}
+						},
+						{
+							"when": "reel:anchor_hook",
+							"model": {
+								"type": "minecraft:model",
+								"model": "reel:item/anchor_hook_applied"
+							}
+						},
+						{
+							"when": "reel:skyhook",
+							"model": {
+								"type": "minecraft:model",
+								"model": "reel:item/sky_hook_applied"
+							}
+						},
+						{
+							"when": "reel:xp_hook",
+							"model": {
+								"type": "minecraft:model",
+								"model": "reel:item/xp_hook_applied"
+							}
+						}
+					],
+					"fallback": {
+						"type": "minecraft:model",
+						"model": "reel:item/iron_hook_applied"
+					}
+				}
+			}
+		]
+	}
+}

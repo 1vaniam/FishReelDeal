@@ -223,6 +223,31 @@ fishing:
       dolphin-biomes: [ocean, cold_ocean, frozen_ocean, deep_ocean, deep_cold_ocean, deep_frozen_ocean, warm_ocean, lukewarm_ocean, deep_lukewarm_ocean]
       frog-biomes: [swamp, mangrove_swamp]
       glow-squid-max-y: 32
+  skyhook:
+    minimum-y: 128                      # Skyhook can be found at this height or above
+    require-open-sky: true               # prevents finding it under roofs or inside caves
+    loot-table:                         # only used by rods fitted with the Skyhook
+      - material: FEATHER
+        weight: 60
+        min-amount: 1
+        max-amount: 4
+      - material: PHANTOM_MEMBRANE
+        weight: 25
+        min-amount: 1
+        max-amount: 2
+      - material: WIND_CHARGE
+        weight: 15
+        min-amount: 1
+        max-amount: 2
+  xp-hook:
+    bonus: 3                            # extra experience points for each successful fish catch
+    pyrofishing-tier-bonuses:           # total XP Hook bonus for custom Pyro catches (minimum is bonus above)
+      bronze: 5
+      silver: 10
+      gold: 20
+      diamond: 30
+      platinum: 100
+      mythical: 1000
   category-weights:
     default:                            # relative weights for standard fishing
       junk: 10
@@ -290,6 +315,10 @@ barrel-catch:
       max-amount: 1
     - material: HEART_OF_THE_SEA
       weight: 3
+      min-amount: 1
+      max-amount: 1
+    - item: xp_hook                     # super-rare custom hook; added to existing configs automatically
+      weight: 1
       min-amount: 1
       max-amount: 1
   placeholder-loot: CHEST               # fallback if the loot table is empty or invalid

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "fish:item/man_faced_carp_april_fools"
+  }
+}

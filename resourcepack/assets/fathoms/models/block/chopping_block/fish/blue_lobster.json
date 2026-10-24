@@ -1,0 +1,7 @@
+{
+	"parent": "fathoms:block/chopping_block/fish/lobster",
+	"textures": {
+		"0": "fathoms:block/chopping_block/fish/blue_lobster",
+		"particle": "fathoms:block/chopping_block/fish/blue_lobster"
+	}
+}

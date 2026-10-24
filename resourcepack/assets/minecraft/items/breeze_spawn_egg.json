@@ -1,0 +1,27 @@
+{
+    "model": {
+        "type": "minecraft:condition",
+        "property": "minecraft:view_entity",
+        "on_true": {
+            "type": "minecraft:model",
+            "model": "minecraft:item/breeze_spawn_egg"
+        },
+        "on_false": {
+            "type": "minecraft:select",
+            "property": "minecraft:display_context",
+            "cases": [
+                {
+                    "when": "gui",
+                    "model": {
+                        "type": "minecraft:model",
+                        "model": "reel:item/anchor_hook"
+                    }
+                }
+            ],
+            "fallback": {
+                "type": "minecraft:model",
+                "model": "minecraft:item/breeze_spawn_egg"
+            }
+        }
+    }
+}

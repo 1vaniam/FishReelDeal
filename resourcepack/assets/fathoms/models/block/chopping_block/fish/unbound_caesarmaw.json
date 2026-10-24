@@ -1,0 +1,7 @@
+{
+	"parent": "fathoms:block/chopping_block/fish/caesarmaw",
+	"textures": {
+		"0": "fathoms:block/chopping_block/fish/unbound_caesarmaw",
+		"particle": "fathoms:block/chopping_block/fish/unbound_caesarmaw"
+	}
+}
