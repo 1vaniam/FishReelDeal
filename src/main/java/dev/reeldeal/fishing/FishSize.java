@@ -137,4 +137,24 @@ public record FishSize(int tier, int lengthCm, double scale) {
         pdc.set(TIER_KEY, PersistentDataType.INTEGER, tier);
         fish.setItemMeta(meta);
     }
+
+    /** Removes the per-catch size data so a killed fish can stack with other catches of its type. */
+    public static void clearFrom(ItemStack fish) {
+        ItemMeta meta = fish.getItemMeta();
+        if (meta == null) {
+            return;
+        }
+        var pdc = meta.getPersistentDataContainer();
+        if (pdc.has(LENGTH_KEY, PersistentDataType.INTEGER)) {
+            List<Component> lore = meta.hasLore() ? new ArrayList<>(meta.lore()) : new ArrayList<>();
+            // stamp() appends the size line after the fish's original lore.
+            if (!lore.isEmpty()) {
+                lore.remove(lore.size() - 1);
+            }
+            meta.lore(lore.isEmpty() ? null : lore);
+        }
+        pdc.remove(LENGTH_KEY);
+        pdc.remove(TIER_KEY);
+        fish.setItemMeta(meta);
+    }
 }

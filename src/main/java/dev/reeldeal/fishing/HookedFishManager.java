@@ -385,6 +385,8 @@ public final class HookedFishManager implements Listener {
         event.setDroppedExp(0);
         if (bytes != null) {
             ItemStack fish = ItemStack.deserializeBytes(bytes);
+            // Keep the size on picked-up fish, but make death drops stackable.
+            FishSize.clearFrom(fish);
             Item drop = event.getEntity().getWorld().dropItemNaturally(event.getEntity().getLocation(), fish);
             drop.setOwner(hooked.ownerId());
             drop.setCanMobPickup(false);
