@@ -13,6 +13,7 @@ import dev.reeldeal.item.ReelItemGuard;
 import dev.reeldeal.item.RodWorkbench;
 import dev.reeldeal.recipe.RecipeRegistrar;
 import dev.reeldeal.weather.WeatherEventManager;
+import dev.reeldeal.weather.FrostwakeBossManager;
 import dev.reeldeal.weather.WeatherRadioManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -24,6 +25,7 @@ public final class ReelDealPlugin extends JavaPlugin {
     private static final String BARREL_HEART_MIGRATION = "internal-migrations.barrel-heart-of-the-sea";
     private static final String BARREL_XP_HOOK_MIGRATION = "internal-migrations.barrel-xp-hook";
     private static final String XP_HOOK_TIER_BONUS_MIGRATION = "internal-migrations.xp-hook-tier-bonuses";
+    private static final String FROSTWAKE_COOLDOWN_MIGRATION = "internal-migrations.frostwake-cooldown-five-minutes";
 
     private ItemRegistry itemRegistry;
     private FishingRodFactory rodFactory;
@@ -32,18 +34,21 @@ public final class ReelDealPlugin extends JavaPlugin {
     private CatchRecords catchRecords;
     private DisplayFollowTicker displayTicker;
     private WeatherEventManager weatherEvents;
+    private FrostwakeBossManager frostwakeBoss;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
 
         this.weatherEvents = new WeatherEventManager(this);
-
         this.itemRegistry = new ItemRegistry(this);
         this.rodFactory = new FishingRodFactory(this, itemRegistry);
         this.catchRecords = new CatchRecords(this);
         RodWorkbench workbench = new RodWorkbench(itemRegistry, rodFactory);
         reload();
+
+        this.frostwakeBoss = new FrostwakeBossManager(this, weatherEvents, itemRegistry);
+        getServer().getPluginManager().registerEvents(frostwakeBoss, this);
 
         getServer().getPluginManager().registerEvents(new ReelItemGuard(itemRegistry), this);
         getServer().getPluginManager().registerEvents(new WeatherRadioManager(this, itemRegistry, weatherEvents), this);
@@ -66,7 +71,7 @@ public final class ReelDealPlugin extends JavaPlugin {
         PyroFishingIntegration.tryRegister(this, rodFactory, pyroEnabled, pyroChance, pyroReplace, pyroDebug, hookedFish);
 
         ReelCommand reelCommand = new ReelCommand(itemRegistry, rodFactory, this::reload, catchRecords,
-                hookedFish, barrelCatches, workbench, weatherEvents);
+                hookedFish, barrelCatches, workbench, weatherEvents, frostwakeBoss);
         registerCommand("reel", "ReelDeal admin/debug commands", java.util.List.of(), reelCommand);
         getServer().getScheduler().runTaskTimer(this, catchRecords::saveAsync, 1200L, 1200L);
 
@@ -81,6 +86,9 @@ public final class ReelDealPlugin extends JavaPlugin {
     public void onDisable() {
         if (weatherEvents != null) {
             weatherEvents.stop();
+        }
+        if (frostwakeBoss != null) {
+            frostwakeBoss.stop();
         }
         if (catchRecords != null) {
             catchRecords.saveNow();
@@ -156,6 +164,14 @@ public final class ReelDealPlugin extends JavaPlugin {
                 }
             }
             config.set(XP_HOOK_TIER_BONUS_MIGRATION, true);
+        }
+
+        if (!config.getBoolean(FROSTWAKE_COOLDOWN_MIGRATION, false)) {
+            String cooldownPath = "weather-events.frostwake.boss.cooldown-seconds";
+            if (config.getLong(cooldownPath, 900L) == 900L) {
+                config.set(cooldownPath, 300L);
+            }
+            config.set(FROSTWAKE_COOLDOWN_MIGRATION, true);
         }
 
         saveConfig();

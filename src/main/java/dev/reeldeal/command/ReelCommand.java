@@ -8,6 +8,7 @@ import dev.reeldeal.fishing.CatchRecords;
 import dev.reeldeal.fishing.BarrelCatchManager;
 import dev.reeldeal.fishing.HookedFishManager;
 import dev.reeldeal.weather.WeatherEventManager;
+import dev.reeldeal.weather.FrostwakeBossManager;
 import io.papermc.paper.command.brigadier.BasicCommand;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import net.kyori.adventure.text.Component;
@@ -36,6 +37,7 @@ public final class ReelCommand implements BasicCommand {
     private final BarrelCatchManager barrels;
     private final RodWorkbench workbench;
     private final WeatherEventManager weatherEvents;
+    private final FrostwakeBossManager frostwakeBoss;
 
     public ReelCommand(ItemRegistry items, FishingRodFactory rods, Runnable reloadAction, CatchRecords catchRecords,
                        HookedFishManager hookedFish, BarrelCatchManager barrels, RodWorkbench workbench) {
@@ -45,6 +47,12 @@ public final class ReelCommand implements BasicCommand {
     public ReelCommand(ItemRegistry items, FishingRodFactory rods, Runnable reloadAction, CatchRecords catchRecords,
                        HookedFishManager hookedFish, BarrelCatchManager barrels, RodWorkbench workbench,
                        WeatherEventManager weatherEvents) {
+        this(items, rods, reloadAction, catchRecords, hookedFish, barrels, workbench, weatherEvents, null);
+    }
+
+    public ReelCommand(ItemRegistry items, FishingRodFactory rods, Runnable reloadAction, CatchRecords catchRecords,
+                       HookedFishManager hookedFish, BarrelCatchManager barrels, RodWorkbench workbench,
+                       WeatherEventManager weatherEvents, FrostwakeBossManager frostwakeBoss) {
         this.items = items;
         this.rods = rods;
         this.reloadAction = reloadAction;
@@ -53,6 +61,7 @@ public final class ReelCommand implements BasicCommand {
         this.barrels = barrels;
         this.workbench = workbench;
         this.weatherEvents = weatherEvents;
+        this.frostwakeBoss = frostwakeBoss;
     }
 
     @Override
@@ -189,12 +198,35 @@ public final class ReelCommand implements BasicCommand {
     }
 
     private void handleTest(CommandSender sender, String[] args) {
+        if (args.length == 3 && args[1].equalsIgnoreCase("frostwake") && args[2].equalsIgnoreCase("stop")) {
+            if (frostwakeBoss != null && frostwakeBoss.stopTestBoss()) {
+                sender.sendMessage(Component.text("Removed the test Frostwake boss.", NamedTextColor.GREEN));
+            } else {
+                sender.sendMessage(Component.text("There is no test Frostwake boss to remove.", NamedTextColor.YELLOW));
+            }
+            return;
+        }
+        if (args.length == 2 && args[1].equalsIgnoreCase("frostwake")) {
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage(Component.text("Run this command in-game to spawn the Frostwake boss.",
+                        NamedTextColor.RED));
+                return;
+            }
+            if (frostwakeBoss != null && frostwakeBoss.spawnTest(player)) {
+                sender.sendMessage(Component.text("Spawned a test Frostwake Illusioner. Move beyond its configured "
+                        + "teleport distance to test its pursuit.", NamedTextColor.GREEN));
+            } else {
+                sender.sendMessage(Component.text("Couldn't spawn the test boss. A Frostwake boss may already be "
+                        + "active, or there is no safe nearby spawn location.", NamedTextColor.RED));
+            }
+            return;
+        }
         if (args.length >= 2 && args[1].equalsIgnoreCase("weather")) {
             handleTestWeather(sender, args);
             return;
         }
         if (args.length != 2 || (!args[1].equalsIgnoreCase("fish") && !args[1].equalsIgnoreCase("barrel"))) {
-            sender.sendMessage(Component.text("Usage: /reel test <fish|barrel> or /reel test weather <event> [seconds]",
+            sender.sendMessage(Component.text("Usage: /reel test <fish|barrel|frostwake> or /reel test weather <event> [seconds]",
                     NamedTextColor.RED));
             return;
         }
@@ -420,6 +452,8 @@ public final class ReelCommand implements BasicCommand {
         sender.sendMessage(Component.text("  /reel leaderboard [largest|catches]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel workbench", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel test <fish|barrel>", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  /reel test frostwake", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  /reel test frostwake stop", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel test weather <event> [seconds]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel test weather stop", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel give <item> [player]", NamedTextColor.YELLOW));
@@ -444,7 +478,7 @@ public final class ReelCommand implements BasicCommand {
             case 2 -> args[0].equalsIgnoreCase("stats") ? onlinePlayerNames()
                     : args[0].equalsIgnoreCase("leaderboard") ? List.of("largest", "catches")
                     : !sender.hasPermission(PERMISSION) ? List.of()
-                    : args[0].equalsIgnoreCase("test") ? List.of("fish", "barrel", "weather")
+                    : args[0].equalsIgnoreCase("test") ? List.of("fish", "barrel", "frostwake", "weather")
                     : args[0].equalsIgnoreCase("give") ? concat(items.ids(), List.of("rod"))
                     : args[0].equalsIgnoreCase("add") ? List.of("line", "hook")
                     : List.of();
@@ -453,6 +487,8 @@ public final class ReelCommand implements BasicCommand {
                     : args[0].equalsIgnoreCase("test") && args[1].equalsIgnoreCase("weather")
                     ? weatherEvents == null ? List.of("acid-rain", "pollen-drift", "stop")
                     : concat(weatherEvents.eventIds(), List.of("stop"))
+                    : args[0].equalsIgnoreCase("test") && args[1].equalsIgnoreCase("frostwake")
+                    ? List.of("stop")
                     : args[0].equalsIgnoreCase("add") ? itemsInCategory(args[1])
                     : List.of();
             case 4 -> args[0].equalsIgnoreCase("give") && args[1].equalsIgnoreCase("rod") ? RecipeRegistrar.HOOKS : List.of();

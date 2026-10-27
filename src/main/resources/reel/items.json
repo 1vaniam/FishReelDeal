@@ -301,6 +301,22 @@
     },
     "category": "fish"
   },
+  "frostwake_shard": {
+    "base_item": "minecraft:amethyst_shard",
+    "item_name": {
+      "text": "Frostwake Shard",
+      "color": "light_purple"
+    },
+    "max_stack_size": 64,
+    "rarity": "rare",
+    "lore": [
+      "§7A crystalline fragment left by the Frostwake.",
+      "§r§9Reel Deal"
+    ],
+    "food": null,
+    "consumable": null,
+    "category": "material"
+  },
   "golden_hook": {
     "base_item": "minecraft:axolotl_spawn_egg",
     "item_name": {

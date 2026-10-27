@@ -33,8 +33,9 @@ public final class WeatherEventManager {
     private static final String METEOR_DUST = "meteor-dust";
     private static final String SPORE_BLOOM = "spore-bloom";
     private static final String MAGNETIC_DISTURBANCE = "magnetic-disturbance";
+    private static final String FROSTWAKE = "frostwake";
     private static final List<String> EVENT_IDS = List.of(ACID_RAIN, POLLEN_DRIFT, ASHFALL, COLD_SNAP,
-            DUST_HAZE, FIREFLY_NIGHT, METEOR_DUST, SPORE_BLOOM, MAGNETIC_DISTURBANCE);
+            DUST_HAZE, FIREFLY_NIGHT, METEOR_DUST, SPORE_BLOOM, MAGNETIC_DISTURBANCE, FROSTWAKE);
 
     private final Plugin plugin;
     private final Map<UUID, WeatherSnapshot> previousWeather = new HashMap<>();
@@ -193,15 +194,22 @@ public final class WeatherEventManager {
     }
 
     private void restoreWeather() {
+        long now = Bukkit.getCurrentTick();
         for (World world : Bukkit.getWorlds()) {
             WeatherSnapshot snapshot = previousWeather.get(world.getUID());
             if (snapshot == null) continue;
+            int elapsedTicks = (int) Math.min(Integer.MAX_VALUE,
+                    Math.max(0L, now - snapshot.capturedAtTick));
             world.setStorm(snapshot.storming);
             world.setThundering(snapshot.thundering);
-            world.setWeatherDuration(snapshot.weatherDuration);
-            world.setThunderDuration(snapshot.thunderDuration);
+            world.setWeatherDuration(remainingWeatherTicks(snapshot.weatherDuration, elapsedTicks));
+            world.setThunderDuration(remainingWeatherTicks(snapshot.thunderDuration, elapsedTicks));
         }
         previousWeather.clear();
+    }
+
+    private int remainingWeatherTicks(int originalTicks, int elapsedTicks) {
+        return Math.max(1, originalTicks - elapsedTicks);
     }
 
     private void playEventCue(String eventId) {
@@ -375,6 +383,7 @@ public final class WeatherEventManager {
             case METEOR_DUST -> "Meteor Dust";
             case SPORE_BLOOM -> "Spore Bloom";
             case MAGNETIC_DISTURBANCE -> "Magnetic Disturbance";
+            case FROSTWAKE -> "Frostwake";
             default -> id;
         };
     }
@@ -390,6 +399,7 @@ public final class WeatherEventManager {
             case METEOR_DUST -> "minecraft:entity.firework_rocket.twinkle_far";
             case SPORE_BLOOM -> "minecraft:block.spore_blossom.fall";
             case MAGNETIC_DISTURBANCE -> "minecraft:block.amethyst_block.resonate";
+            case FROSTWAKE -> "minecraft:entity.illusioner.ambient";
             default -> "";
         };
     }
@@ -420,6 +430,7 @@ public final class WeatherEventManager {
             case METEOR_DUST -> "FIREWORK";
             case SPORE_BLOOM -> "SPORE_BLOSSOM_AIR";
             case MAGNETIC_DISTURBANCE -> "ELECTRIC_SPARK";
+            case FROSTWAKE -> "SNOWFLAKE";
             default -> "CRIT";
         };
     }
@@ -476,12 +487,14 @@ public final class WeatherEventManager {
         private final boolean thundering;
         private final int weatherDuration;
         private final int thunderDuration;
+        private final long capturedAtTick;
 
         private WeatherSnapshot(World world) {
             this.storming = world.hasStorm();
             this.thundering = world.isThundering();
             this.weatherDuration = world.getWeatherDuration();
             this.thunderDuration = world.getThunderDuration();
+            this.capturedAtTick = Bukkit.getCurrentTick();
         }
     }
 }

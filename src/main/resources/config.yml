@@ -81,6 +81,39 @@ weather-events:
     particle-speed: 0.02
     require-sky-exposure: true
     weather-radio-interference: true
+  frostwake:
+    enabled: true
+    display-name: "Frostwake"
+    weight: 1.0
+    duration-seconds: 300
+    effect-check-interval-seconds: 12
+    effect-chance-per-check: 0.12
+    sound: "minecraft:entity.illusioner.ambient"
+    sound-volume: 0.06
+    sound-pitch: 0.75
+    particle: SNOWFLAKE
+    particle-count: 3
+    particle-height: 1.5
+    particle-spread: 0.4
+    particle-vertical-spread: 0.35
+    particle-speed: 0.015
+    require-sky-exposure: true
+    weather-radio-interference: true
+    boss:
+      enabled: true
+      min-fishers: 5
+      max-fishers: 10
+      gather-radius: 24.0
+      summon-chance-per-catch: 0.12
+      cooldown-seconds: 300
+      health: 160.0
+      teleport-distance: 32.0
+      stuck-seconds: 10
+      stuck-min-distance: 12.0
+      teleport-check-interval-seconds: 1
+      teleport-cooldown-seconds: 8
+      teleport-arrival-radius: 6.0
+      cold-biomes: []
   dust-haze:
     enabled: true
     display-name: "Dust Haze"
