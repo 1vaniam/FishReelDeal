@@ -3,10 +3,15 @@ package dev.reeldeal.fishing;
 import dev.reeldeal.integration.PyroFishingIntegration;
 import dev.reeldeal.item.FishingRodFactory;
 import dev.reeldeal.item.ItemRegistry;
+import dev.reeldeal.weather.WeatherEventManager;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
+import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.World;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.enchantments.Enchantment;
@@ -41,12 +46,15 @@ public final class FishingLootResolver implements Listener {
     private final SkyLoot skyLoot;
     private final TreasureLoot treasureLoot;
     private final BarrelCatchManager barrels;
+    private final WeatherEventManager weatherEvents;
     private final Random random = new Random();
 
-    public FishingLootResolver(Plugin plugin, ItemRegistry items, FishingRodFactory rods, BarrelCatchManager barrels) {
+    public FishingLootResolver(Plugin plugin, ItemRegistry items, FishingRodFactory rods,
+                               BarrelCatchManager barrels, WeatherEventManager weatherEvents) {
         this.plugin = plugin;
         this.rods = rods;
         this.barrels = barrels;
+        this.weatherEvents = weatherEvents;
         this.junkLoot = new JunkLoot(items);
         this.mineralLoot = new MineralLoot();
         this.fishLoot = new FishLoot(plugin, items);
@@ -84,6 +92,7 @@ public final class FishingLootResolver implements Listener {
         if (!(event.getCaught() instanceof Item caughtItem)) {
             return;
         }
+        applyWeatherFishingBonus(event, player, hook, loc);
         if (!reelRod) {
             return;
         }
@@ -176,6 +185,13 @@ public final class FishingLootResolver implements Listener {
         int junkWeight = configuredCategoryWeight(hookPath + "junk", "default.junk", 10);
         int treasureWeight = configuredCategoryWeight(hookPath + "treasure", "default.treasure", 5);
         int fishWeight = configuredCategoryWeight(hookPath + "fish", "default.fish", 85);
+        if (weatherEvents != null && weatherEvents.isEventActive("cold-snap")) {
+            String coldSnapPath = "weather-events.cold-snap.";
+            junkWeight = multiplyWeight(junkWeight, plugin.getConfig().getDouble(
+                    coldSnapPath + "junk-weight-multiplier", 0.7));
+            treasureWeight = multiplyWeight(treasureWeight, plugin.getConfig().getDouble(
+                    coldSnapPath + "treasure-weight-multiplier", 1.6));
+        }
         boolean mineralEligible = "cluster_hook".equals(hookId)
                 && loc.getBlockY() <= plugin.getConfig().getInt(hookPath + "underground-max-y", 48);
 
@@ -191,6 +207,83 @@ public final class FishingLootResolver implements Listener {
 
         Category result = pool.pick(random);
         return result != null ? result : Category.JUNK;
+    }
+
+    private void applyWeatherFishingBonus(PlayerFishEvent event, Player player, FishHook hook, Location location) {
+        if (weatherEvents == null) return;
+        String eventId = weatherEvents.activeEventId();
+        if (eventId == null) return;
+        String path = "weather-events." + eventId + ".";
+
+        if ("firefly-night".equals(eventId)) {
+            int bonusExperience = Math.max(0, plugin.getConfig().getInt(path + "fishing-bonus-experience", 4));
+            event.setExpToDrop(event.getExpToDrop() + bonusExperience);
+        }
+
+        double chance = plugin.getConfig().getDouble(path + "fishing-bonus-chance", 0.0);
+        if (!Double.isFinite(chance)) return;
+        chance = Math.max(0.0, Math.min(1.0, chance));
+        if (chance <= 0.0 || random.nextDouble() >= chance) return;
+
+        String materialName = plugin.getConfig().getString(path + "fishing-bonus-material", "");
+        if ("magnetic-disturbance".equals(eventId)) {
+            double goldChance = plugin.getConfig().getDouble(path + "fishing-bonus-extra-gold-chance", 0.0);
+            if (Double.isFinite(goldChance)
+                    && random.nextDouble() < Math.max(0.0, Math.min(1.0, goldChance))) {
+                materialName = "GOLD_NUGGET";
+            }
+        }
+        Material material = materialName == null ? null : Material.matchMaterial(materialName);
+        if (material == null || material.isAir()) {
+            plugin.getLogger().warning("Invalid fishing bonus material at " + path + "fishing-bonus-material.");
+            return;
+        }
+        int minimum = Math.max(1, Math.min(64,
+                plugin.getConfig().getInt(path + "fishing-bonus-min-amount", 1)));
+        int maximum = Math.max(minimum, Math.min(64,
+                plugin.getConfig().getInt(path + "fishing-bonus-max-amount", minimum)));
+        int amount = minimum + random.nextInt(maximum - minimum + 1);
+        ItemStack bonus = new ItemStack(material, amount);
+        var leftovers = player.getInventory().addItem(bonus);
+        for (ItemStack leftover : leftovers.values()) {
+            Item drop = location.getWorld().dropItemNaturally(location, leftover);
+            drop.setOwner(player.getUniqueId());
+        }
+
+        Particle particle = weatherBonusParticle(eventId);
+        if (particle != null) player.spawnParticle(particle, hook.getLocation().add(0, 0.4, 0),
+                8, 0.25, 0.25, 0.25, 0.02);
+        player.sendActionBar(Component.text(weatherBonusMessage(eventId), NamedTextColor.GRAY));
+    }
+
+    private Particle weatherBonusParticle(String eventId) {
+        return switch (eventId) {
+            case "pollen-drift", "spore-bloom" -> Particle.SPORE_BLOSSOM_AIR;
+            case "ashfall" -> Particle.ASH;
+            case "dust-haze" -> Particle.WHITE_ASH;
+            case "meteor-dust" -> Particle.FIREWORK;
+            case "magnetic-disturbance" -> Particle.ELECTRIC_SPARK;
+            default -> null;
+        };
+    }
+
+    private String weatherBonusMessage(String eventId) {
+        return switch (eventId) {
+            case "pollen-drift" -> "Pollen Drift leaves seeds on your line.";
+            case "ashfall" -> "Ashfall leaves something in your catch.";
+            case "dust-haze" -> "Something clinks in the dusty catch.";
+            case "meteor-dust" -> "A fragment of meteor dust joins your catch.";
+            case "spore-bloom" -> "The spores carried a mushroom to your line.";
+            case "magnetic-disturbance" -> "Metallic debris clings to your catch.";
+            default -> "The weather leaves a little something behind.";
+        };
+    }
+
+    private int multiplyWeight(int weight, double multiplier) {
+        if (weight <= 0) return 0;
+        if (!Double.isFinite(multiplier)) return weight;
+        if (multiplier <= 0.0) return 0;
+        return (int) Math.min(Integer.MAX_VALUE, Math.round(weight * multiplier));
     }
 
     private int configuredCategoryWeight(String hookPath, String defaultKey, int fallback) {

@@ -14,91 +14,103 @@ weather-events:
     display-name: "Acid Rain"
     weight: 1.0                          # relative chance among enabled events
     duration-seconds: 300
-    effect-check-interval-seconds: 5
-    effect-chance-per-check: 0.2         # per-player chance each time the hiss/particle cue is checked
+    effect-check-interval-seconds: 4
+    effect-chance-per-check: 0.45        # per-player chance each time the hiss/particle cue is checked
     sound: "minecraft:block.fire.extinguish"
-    sound-volume: 0.12                   # quiet; range 0.0-1.0
+    sound-volume: 0.16                   # quiet; range 0.0-1.0
     sound-pitch: 0.85
     particle: FALLING_WATER
-    particle-count: 4
+    particle-count: 6
     particle-height: 1.5
-    particle-spread: 0.35
-    particle-vertical-spread: 0.35
+    particle-spread: 0.5
+    particle-vertical-spread: 0.45
     particle-speed: 0.02
     require-sky-exposure: true
     weather-radio-interference: true
+    fishing-bonus-chance: 0.0
   pollen-drift:
     enabled: true
     display-name: "Pollen Drift"
     weight: 1.0
     duration-seconds: 300
-    effect-check-interval-seconds: 8
-    effect-chance-per-check: 0.2
+    effect-check-interval-seconds: 6
+    effect-chance-per-check: 0.35
     sound: "minecraft:block.azalea_leaves.hit"
-    sound-volume: 0.08
+    sound-volume: 0.13
     sound-pitch: 1.0
     particle: SPORE_BLOSSOM_AIR
-    particle-count: 5
+    particle-count: 7
     particle-height: 1.5
-    particle-spread: 0.35
-    particle-vertical-spread: 0.35
+    particle-spread: 0.55
+    particle-vertical-spread: 0.5
     particle-speed: 0.02
     require-sky-exposure: true
     weather-radio-interference: true
+    fishing-bonus-chance: 0.30
+    fishing-bonus-material: WHEAT_SEEDS
+    fishing-bonus-min-amount: 2
+    fishing-bonus-max-amount: 4
   ashfall:
     enabled: true
     display-name: "Ashfall"
     weight: 1.0
     duration-seconds: 300
-    effect-check-interval-seconds: 8
-    effect-chance-per-check: 0.2
+    effect-check-interval-seconds: 6
+    effect-chance-per-check: 0.35
     sound: "minecraft:block.sand.fall"
-    sound-volume: 0.08
+    sound-volume: 0.14
     sound-pitch: 0.9
     particle: ASH
-    particle-count: 5
+    particle-count: 8
     particle-height: 1.5
-    particle-spread: 0.35
-    particle-vertical-spread: 0.35
+    particle-spread: 0.6
+    particle-vertical-spread: 0.55
     particle-speed: 0.02
     require-sky-exposure: true
     weather-radio-interference: true
+    fishing-bonus-chance: 0.30
+    fishing-bonus-material: CHARCOAL
+    fishing-bonus-min-amount: 1
+    fishing-bonus-max-amount: 2
   cold-snap:
     enabled: true
     display-name: "Cold Snap"
     weight: 1.0
     duration-seconds: 300
-    effect-check-interval-seconds: 10
-    effect-chance-per-check: 0.2
+    effect-check-interval-seconds: 6
+    effect-chance-per-check: 0.35
     sound: "minecraft:block.powder_snow.step"
-    sound-volume: 0.07
+    sound-volume: 0.13
     sound-pitch: 0.9
     particle: SNOWFLAKE
-    particle-count: 3
+    particle-count: 6
     particle-height: 1.5
-    particle-spread: 0.35
-    particle-vertical-spread: 0.35
+    particle-spread: 0.5
+    particle-vertical-spread: 0.55
     particle-speed: 0.02
     require-sky-exposure: true
     weather-radio-interference: true
+    treasure-weight-multiplier: 1.6
+    junk-weight-multiplier: 0.7
   frostwake:
     enabled: true
     display-name: "Frostwake"
     weight: 1.0
     duration-seconds: 300
-    effect-check-interval-seconds: 12
-    effect-chance-per-check: 0.12
+    effect-check-interval-seconds: 8
+    effect-chance-per-check: 0.3
     sound: "minecraft:entity.illusioner.ambient"
-    sound-volume: 0.06
+    sound-volume: 0.12
     sound-pitch: 0.75
     particle: SNOWFLAKE
-    particle-count: 3
+    particle-count: 6
     particle-height: 1.5
-    particle-spread: 0.4
-    particle-vertical-spread: 0.35
+    particle-spread: 0.55
+    particle-vertical-spread: 0.5
     particle-speed: 0.015
     require-sky-exposure: true
     weather-radio-interference: true
+    fishing-bonus-chance: 0.0
     boss:
       enabled: true
       min-fishers: 5
@@ -119,91 +131,109 @@ weather-events:
     display-name: "Dust Haze"
     weight: 1.0
     duration-seconds: 300
-    effect-check-interval-seconds: 8
-    effect-chance-per-check: 0.18
+    effect-check-interval-seconds: 6
+    effect-chance-per-check: 0.35
     sound: "minecraft:block.sand.idle"
-    sound-volume: 0.06
+    sound-volume: 0.12
     sound-pitch: 0.8
     particle: WHITE_ASH
-    particle-count: 4
+    particle-count: 7
     particle-height: 1.5
-    particle-spread: 0.35
-    particle-vertical-spread: 0.35
+    particle-spread: 0.55
+    particle-vertical-spread: 0.5
     particle-speed: 0.02
     require-sky-exposure: true
     weather-radio-interference: true
+    fishing-bonus-chance: 0.30
+    fishing-bonus-material: CLAY_BALL
+    fishing-bonus-min-amount: 1
+    fishing-bonus-max-amount: 2
   firefly-night:
     enabled: true
     display-name: "Firefly Night"
     weight: 1.0
     duration-seconds: 300
-    effect-check-interval-seconds: 8
-    effect-chance-per-check: 0.2
+    effect-check-interval-seconds: 5
+    effect-chance-per-check: 0.4
     sound: "minecraft:block.amethyst_block.chime"
-    sound-volume: 0.06
+    sound-volume: 0.13
     sound-pitch: 1.35
     particle: END_ROD
-    particle-count: 2
+    particle-count: 5
     particle-height: 1.5
-    particle-spread: 0.35
-    particle-vertical-spread: 0.35
+    particle-spread: 0.55
+    particle-vertical-spread: 0.55
     particle-speed: 0.02
     require-sky-exposure: true
     weather-radio-interference: true
+    fishing-bonus-experience: 4
   meteor-dust:
     enabled: true
     display-name: "Meteor Dust"
     weight: 1.0
     duration-seconds: 300
-    effect-check-interval-seconds: 15
-    effect-chance-per-check: 0.1
+    effect-check-interval-seconds: 10
+    effect-chance-per-check: 0.3
     sound: "minecraft:entity.firework_rocket.twinkle_far"
-    sound-volume: 0.08
+    sound-volume: 0.15
     sound-pitch: 0.8
     particle: FIREWORK
-    particle-count: 2
-    particle-height: 10.0
-    particle-spread: 0.8
+    particle-count: 4
+    particle-height: 12.0
+    particle-spread: 1.2
     particle-vertical-spread: 0.0
     particle-speed: 0.02
     require-sky-exposure: true
     weather-radio-interference: true
+    fishing-bonus-chance: 0.12
+    fishing-bonus-material: AMETHYST_SHARD
+    fishing-bonus-min-amount: 1
+    fishing-bonus-max-amount: 1
   spore-bloom:
     enabled: true
     display-name: "Spore Bloom"
     weight: 1.0
     duration-seconds: 300
-    effect-check-interval-seconds: 8
-    effect-chance-per-check: 0.2
+    effect-check-interval-seconds: 6
+    effect-chance-per-check: 0.35
     sound: "minecraft:block.spore_blossom.fall"
-    sound-volume: 0.08
+    sound-volume: 0.14
     sound-pitch: 0.9
     particle: SPORE_BLOSSOM_AIR
-    particle-count: 4
+    particle-count: 7
     particle-height: 1.5
-    particle-spread: 0.35
-    particle-vertical-spread: 0.35
+    particle-spread: 0.6
+    particle-vertical-spread: 0.55
     particle-speed: 0.02
     require-sky-exposure: true
     weather-radio-interference: true
+    fishing-bonus-chance: 0.25
+    fishing-bonus-material: BROWN_MUSHROOM
+    fishing-bonus-min-amount: 1
+    fishing-bonus-max-amount: 2
   magnetic-disturbance:
     enabled: true
     display-name: "Magnetic Disturbance"
     weight: 1.0
     duration-seconds: 300
-    effect-check-interval-seconds: 12
-    effect-chance-per-check: 0.15
+    effect-check-interval-seconds: 6
+    effect-chance-per-check: 0.35
     sound: "minecraft:block.amethyst_block.resonate"
-    sound-volume: 0.08
+    sound-volume: 0.14
     sound-pitch: 0.7
     particle: ELECTRIC_SPARK
-    particle-count: 2
+    particle-count: 5
     particle-height: 1.5
-    particle-spread: 0.35
-    particle-vertical-spread: 0.35
+    particle-spread: 0.55
+    particle-vertical-spread: 0.5
     particle-speed: 0.02
     require-sky-exposure: true
     weather-radio-interference: true
+    fishing-bonus-chance: 0.30
+    fishing-bonus-material: IRON_NUGGET
+    fishing-bonus-min-amount: 1
+    fishing-bonus-max-amount: 3
+    fishing-bonus-extra-gold-chance: 0.15
 weather-radio:
   warning-lead-minutes: 5                # chat warning time before a scheduled custom event
   interference-sound: "minecraft:block.redstone_torch.burnout"

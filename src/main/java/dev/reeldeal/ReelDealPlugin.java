@@ -26,6 +26,7 @@ public final class ReelDealPlugin extends JavaPlugin {
     private static final String BARREL_XP_HOOK_MIGRATION = "internal-migrations.barrel-xp-hook";
     private static final String XP_HOOK_TIER_BONUS_MIGRATION = "internal-migrations.xp-hook-tier-bonuses";
     private static final String FROSTWAKE_COOLDOWN_MIGRATION = "internal-migrations.frostwake-cooldown-five-minutes";
+    private static final String WEATHER_CUE_INTENSITY_MIGRATION = "internal-migrations.weather-cue-intensity-v1";
 
     private ItemRegistry itemRegistry;
     private FishingRodFactory rodFactory;
@@ -56,7 +57,8 @@ public final class ReelDealPlugin extends JavaPlugin {
         this.displayTicker = new DisplayFollowTicker(this);
         this.barrelCatches = new BarrelCatchManager(this, displayTicker, itemRegistry);
         getServer().getPluginManager().registerEvents(barrelCatches, this);
-        getServer().getPluginManager().registerEvents(new FishingLootResolver(this, itemRegistry, rodFactory, barrelCatches), this);
+        getServer().getPluginManager().registerEvents(
+                new FishingLootResolver(this, itemRegistry, rodFactory, barrelCatches, weatherEvents), this);
 
         this.hookedFish = new HookedFishManager(this, displayTicker, catchRecords);
         getServer().getPluginManager().registerEvents(hookedFish, this);
@@ -174,8 +176,62 @@ public final class ReelDealPlugin extends JavaPlugin {
             config.set(FROSTWAKE_COOLDOWN_MIGRATION, true);
         }
 
+        if (!config.getBoolean(WEATHER_CUE_INTENSITY_MIGRATION, false)) {
+            migrateWeatherCueDefaults(config);
+            config.set(WEATHER_CUE_INTENSITY_MIGRATION, true);
+        }
+
         saveConfig();
     }
+
+    private void migrateWeatherCueDefaults(org.bukkit.configuration.file.FileConfiguration config) {
+        WeatherCueDefaults[] events = {
+                new WeatherCueDefaults("acid-rain", 5, 4, 0.20, 0.45, 0.12, 0.16, 4, 6, 0.35, 0.50, 1.5, 1.5),
+                new WeatherCueDefaults("pollen-drift", 8, 6, 0.20, 0.35, 0.08, 0.13, 5, 7, 0.35, 0.55, 1.5, 1.5),
+                new WeatherCueDefaults("ashfall", 8, 6, 0.20, 0.35, 0.08, 0.14, 5, 8, 0.35, 0.60, 1.5, 1.5),
+                new WeatherCueDefaults("cold-snap", 10, 6, 0.20, 0.35, 0.07, 0.13, 3, 6, 0.35, 0.50, 1.5, 1.5),
+                new WeatherCueDefaults("frostwake", 12, 8, 0.12, 0.30, 0.06, 0.12, 3, 6, 0.40, 0.55, 1.5, 1.5),
+                new WeatherCueDefaults("dust-haze", 8, 6, 0.18, 0.35, 0.06, 0.12, 4, 7, 0.35, 0.55, 1.5, 1.5),
+                new WeatherCueDefaults("firefly-night", 8, 5, 0.20, 0.40, 0.06, 0.13, 2, 5, 0.35, 0.55, 1.5, 1.5),
+                new WeatherCueDefaults("meteor-dust", 15, 10, 0.10, 0.30, 0.08, 0.15, 2, 4, 0.80, 1.20, 10.0, 12.0),
+                new WeatherCueDefaults("spore-bloom", 8, 6, 0.20, 0.35, 0.08, 0.14, 4, 7, 0.35, 0.60, 1.5, 1.5),
+                new WeatherCueDefaults("magnetic-disturbance", 12, 6, 0.15, 0.35, 0.08, 0.14, 2, 5, 0.35, 0.55, 1.5, 1.5)
+        };
+        for (WeatherCueDefaults event : events) {
+            String path = "weather-events." + event.id() + ".";
+            migrateLongIfDefault(config, path + "effect-check-interval-seconds",
+                    event.oldInterval(), event.newInterval());
+            migrateDoubleIfDefault(config, path + "effect-chance-per-check",
+                    event.oldChance(), event.newChance());
+            migrateDoubleIfDefault(config, path + "sound-volume", event.oldVolume(), event.newVolume());
+            migrateIntIfDefault(config, path + "particle-count", event.oldParticleCount(), event.newParticleCount());
+            migrateDoubleIfDefault(config, path + "particle-spread", event.oldSpread(), event.newSpread());
+            migrateDoubleIfDefault(config, path + "particle-height", event.oldHeight(), event.newHeight());
+        }
+    }
+
+    private void migrateLongIfDefault(org.bukkit.configuration.file.FileConfiguration config,
+                                      String path, long oldValue, long newValue) {
+        if (config.getLong(path, oldValue) == oldValue) config.set(path, newValue);
+    }
+
+    private void migrateIntIfDefault(org.bukkit.configuration.file.FileConfiguration config,
+                                     String path, int oldValue, int newValue) {
+        if (config.getInt(path, oldValue) == oldValue) config.set(path, newValue);
+    }
+
+    private void migrateDoubleIfDefault(org.bukkit.configuration.file.FileConfiguration config,
+                                       String path, double oldValue, double newValue) {
+        if (Double.compare(config.getDouble(path, oldValue), oldValue) == 0) config.set(path, newValue);
+    }
+
+    private record WeatherCueDefaults(String id,
+                                      long oldInterval, long newInterval,
+                                      double oldChance, double newChance,
+                                      double oldVolume, double newVolume,
+                                      int oldParticleCount, int newParticleCount,
+                                      double oldSpread, double newSpread,
+                                      double oldHeight, double newHeight) { }
 
     public ItemRegistry items() {
         return itemRegistry;
