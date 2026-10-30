@@ -1,6 +1,7 @@
 package dev.reeldeal.weather;
 
 import dev.reeldeal.item.ItemRegistry;
+import dev.reeldeal.quest.QuestManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -52,6 +53,7 @@ public final class FrostwakeBossManager implements Listener {
     private final Plugin plugin;
     private final WeatherEventManager weatherEvents;
     private final ItemRegistry items;
+    private final QuestManager quests;
     private final Map<UUID, FishHook> activeHooks = new HashMap<>();
     private final BukkitTask ticker;
     private UUID bossId;
@@ -64,10 +66,12 @@ public final class FrostwakeBossManager implements Listener {
     private Location lastBossLocation;
     private Set<UUID> encounterParticipants = Set.of();
 
-    public FrostwakeBossManager(Plugin plugin, WeatherEventManager weatherEvents, ItemRegistry items) {
+    public FrostwakeBossManager(Plugin plugin, WeatherEventManager weatherEvents, ItemRegistry items,
+                                QuestManager quests) {
         this.plugin = plugin;
         this.weatherEvents = weatherEvents;
         this.items = items;
+        this.quests = quests;
         this.ticker = Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 20L, 20L);
     }
 
@@ -111,6 +115,8 @@ public final class FrostwakeBossManager implements Listener {
         event.setDroppedExp(0);
         for (UUID recipientId : recipients) {
             rewardFrostwakeShard(recipientId, deathLocation);
+            Player participant = Bukkit.getPlayer(recipientId);
+            if (participant != null && quests != null) quests.recordFrostwakeDefeat(participant);
         }
         broadcastNearby(deathLocation, 48,
                 Component.text("The Frostwake fades beneath the ice-cold air.", NamedTextColor.GRAY));

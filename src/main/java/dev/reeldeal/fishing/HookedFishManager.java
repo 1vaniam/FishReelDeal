@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import dev.reeldeal.quest.QuestManager;
 
 public final class HookedFishManager implements Listener {
 
@@ -67,16 +68,19 @@ public final class HookedFishManager implements Listener {
     private final Plugin plugin;
     private final DisplayFollowTicker displayTicker;
     private final CatchRecords catchRecords;
+    private final QuestManager quests;
     private FishSize.Settings fishSizeSettings;
     private final List<String> modelKeys = new ArrayList<>();          // longest first
     private final Map<UUID, FishHook> hooks = new HashMap<>();          // player -> active hook
     private final Map<UUID, Location> catchLocations = new HashMap<>(); // last bobber position, captured before retraction
     private final Map<UUID, Hooked> active = new HashMap<>();           // mob uuid -> hooked fish
 
-    public HookedFishManager(Plugin plugin, DisplayFollowTicker displayTicker, CatchRecords catchRecords) {
+    public HookedFishManager(Plugin plugin, DisplayFollowTicker displayTicker, CatchRecords catchRecords,
+                             QuestManager quests) {
         this.plugin = plugin;
         this.displayTicker = displayTicker;
         this.catchRecords = catchRecords;
+        this.quests = quests;
         reload();
     }
 
@@ -248,6 +252,7 @@ public final class HookedFishManager implements Listener {
         if (recordCatch) {
             catchRecords.recordFish(player.getUniqueId(), player.getName(), modelKey,
                     size == null ? 0 : size.lengthCm(), size == null ? -1 : size.tier());
+            if (quests != null) quests.recordHookedFish(player, modelKey, size == null ? -1 : size.tier());
         }
         return true;
     }

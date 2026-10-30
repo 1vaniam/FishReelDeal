@@ -4,6 +4,7 @@ import dev.reeldeal.integration.PyroFishingIntegration;
 import dev.reeldeal.item.FishingRodFactory;
 import dev.reeldeal.item.ItemRegistry;
 import dev.reeldeal.weather.WeatherEventManager;
+import dev.reeldeal.quest.QuestManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -37,9 +38,11 @@ public final class FishingLootResolver implements Listener {
     private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
 
     private enum Category { JUNK, TREASURE, MINERAL, FISH }
+    private record ResolvedCatch(CaughtResult result, String category) { }
 
     private final Plugin plugin;
     private final FishingRodFactory rods;
+    private final ItemRegistry items;
     private final JunkLoot junkLoot;
     private final MineralLoot mineralLoot;
     private final FishLoot fishLoot;
@@ -47,14 +50,17 @@ public final class FishingLootResolver implements Listener {
     private final TreasureLoot treasureLoot;
     private final BarrelCatchManager barrels;
     private final WeatherEventManager weatherEvents;
+    private final QuestManager quests;
     private final Random random = new Random();
 
     public FishingLootResolver(Plugin plugin, ItemRegistry items, FishingRodFactory rods,
-                               BarrelCatchManager barrels, WeatherEventManager weatherEvents) {
+                               BarrelCatchManager barrels, WeatherEventManager weatherEvents, QuestManager quests) {
         this.plugin = plugin;
         this.rods = rods;
+        this.items = items;
         this.barrels = barrels;
         this.weatherEvents = weatherEvents;
+        this.quests = quests;
         this.junkLoot = new JunkLoot(items);
         this.mineralLoot = new MineralLoot();
         this.fishLoot = new FishLoot(plugin, items);
@@ -92,6 +98,7 @@ public final class FishingLootResolver implements Listener {
         if (!(event.getCaught() instanceof Item caughtItem)) {
             return;
         }
+        if (quests != null) quests.recordCatch(player, weatherEvents == null ? null : weatherEvents.activeEventId());
         applyWeatherFishingBonus(event, player, hook, loc);
         if (!reelRod) {
             return;
@@ -104,7 +111,22 @@ public final class FishingLootResolver implements Listener {
 
         String lineId = strip(rods.lineOf(rod));
 
-        CaughtResult outcome = resolveOutcome(hookId, lineId, hook, rod, loc);
+        ResolvedCatch resolvedCatch = resolveOutcome(hookId, lineId, hook, rod, loc);
+        CaughtResult outcome = resolvedCatch.result();
+        if (quests != null) {
+            String caughtItemId = null;
+            String caughtMobId = null;
+            if (outcome instanceof CaughtResult.AsItem asItem) {
+                caughtItemId = items.identifierOf(asItem.stack());
+                if (caughtItemId == null) caughtItemId = asItem.stack().getType().getKey().getKey();
+                else caughtItemId = strip(caughtItemId);
+            } else if (outcome instanceof CaughtResult.AsMob asMob) {
+                caughtMobId = asMob.type().name().toLowerCase(java.util.Locale.ROOT);
+            }
+            quests.recordFishingDetails(player, hookId, lineId,
+                    loc.getBlock().getBiome().getKey().getKey(), caughtItemId, caughtMobId,
+                    resolvedCatch.category(), hook.isInOpenWater());
+        }
         if (plugin.getConfig().getBoolean("fishing.debug", false)) {
             plugin.getLogger().info("Fishing result: player=" + player.getName() + ", hook=" + hookId
                     + ", line=" + lineId + ", resolved=" + outcome.getClass().getSimpleName() + ", pyroReplacement="
@@ -131,21 +153,22 @@ public final class FishingLootResolver implements Listener {
         }
     }
 
-    private CaughtResult resolveOutcome(String hookId, String lineId, FishHook hook, ItemStack rod, Location loc) {
+    private ResolvedCatch resolveOutcome(String hookId, String lineId, FishHook hook, ItemStack rod, Location loc) {
         if ("skyhook".equals(hookId)) {
-            return CaughtResult.item(skyLoot.resolve(random));
+            return new ResolvedCatch(CaughtResult.item(skyLoot.resolve(random)), "sky");
         }
         Category category = resolveCategory(hookId, hook, rod, loc);
         if (plugin.getConfig().getBoolean("fishing.debug", false)) {
             plugin.getLogger().info("Fishing category decision: hook=" + hookId + ", line=" + lineId
                     + ", openWater=" + hook.isInOpenWater() + ", category=" + category + ".");
         }
-        return switch (category) {
+        CaughtResult result = switch (category) {
             case FISH -> fishLoot.resolve(lineId, hookId, loc, random);
             case JUNK -> CaughtResult.item(junkLoot.resolve(hookId, loc, random));
             case TREASURE -> CaughtResult.item(treasureLoot.resolve(loc, random));
             case MINERAL -> CaughtResult.item(mineralLoot.resolve(lineId, loc, random));
         };
+        return new ResolvedCatch(result, category.name().toLowerCase(java.util.Locale.ROOT));
     }
 
     private void deliver(CaughtResult result, Location loc, Player player) {

@@ -1,6 +1,7 @@
 package dev.reeldeal.weather;
 
 import dev.reeldeal.item.ItemRegistry;
+import dev.reeldeal.quest.QuestManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -29,13 +30,15 @@ public final class WeatherRadioManager implements Listener {
     private final Plugin plugin;
     private final ItemRegistry items;
     private final WeatherEventManager weatherEvents;
+    private final QuestManager quests;
     private final Map<UUID, BukkitTask> animations = new HashMap<>();
-    private final Map<UUID, Boolean> showingNextForecast = new HashMap<>();
 
-    public WeatherRadioManager(Plugin plugin, ItemRegistry items, WeatherEventManager weatherEvents) {
+    public WeatherRadioManager(Plugin plugin, ItemRegistry items, WeatherEventManager weatherEvents,
+                               QuestManager quests) {
         this.plugin = plugin;
         this.items = items;
         this.weatherEvents = weatherEvents;
+        this.quests = quests;
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = false)
@@ -55,10 +58,9 @@ public final class WeatherRadioManager implements Listener {
         if (animations.containsKey(playerId)) {
             return;
         }
+        if (quests != null) quests.recordRadioCheck(player);
         boolean interference = weatherEvents.isRadioInterferenceActive();
-        boolean showNext = showingNextForecast.getOrDefault(playerId, false);
-        showingNextForecast.put(playerId, !showNext);
-        animateForecast(player, showNext, interference);
+        animateForecast(player, interference);
         if (interference) {
             String sound = plugin.getConfig().getString("weather-radio.interference-sound",
                     "minecraft:block.redstone_torch.burnout");
@@ -72,7 +74,7 @@ public final class WeatherRadioManager implements Listener {
         }
     }
 
-    private void animateForecast(Player player, boolean showNext, boolean interference) {
+    private void animateForecast(Player player, boolean interference) {
         UUID playerId = player.getUniqueId();
         BukkitTask previous = animations.remove(playerId);
         if (previous != null) previous.cancel();
@@ -94,19 +96,23 @@ public final class WeatherRadioManager implements Listener {
                     return;
                 }
 
-                String label = showNext ? "NEXT" : "NOW";
-                String forecast = showNext
-                        ? weatherEvents.nextWeather(player.getWorld())
-                        : weatherEvents.currentWeather(player.getWorld());
-                Component result = Component.text("RADIO  »  ", NamedTextColor.GOLD)
-                        .decorate(TextDecoration.BOLD)
-                        .append(Component.text(label + ": ", NamedTextColor.GRAY).decorate(TextDecoration.BOLD))
-                        .append(Component.text(forecast, showNext ? NamedTextColor.GRAY : NamedTextColor.YELLOW));
+                String current = weatherEvents.currentWeather(player.getWorld());
+                String purpose = weatherEvents.currentWeatherPurpose(player.getWorld());
+                String forecast = weatherEvents.nextWeather(player.getWorld());
+                Component header = Component.text("WEATHER RADIO  »  ", NamedTextColor.GOLD)
+                        .decorate(TextDecoration.BOLD);
+                Component result = header.append(Component.text("CURRENT: ", NamedTextColor.GRAY)
+                                .decorate(TextDecoration.BOLD))
+                        .append(Component.text(current, NamedTextColor.YELLOW))
+                        .append(Component.text(" — " + purpose, NamedTextColor.GRAY))
+                        .append(Component.newline())
+                        .append(Component.text("NEXT: ", NamedTextColor.GRAY).decorate(TextDecoration.BOLD))
+                        .append(Component.text(forecast, NamedTextColor.WHITE));
                 if (interference) {
                     result = result.append(Component.text("  ~ static", NamedTextColor.DARK_GRAY)
                             .decorate(TextDecoration.ITALIC));
                 }
-                player.sendActionBar(result);
+                player.sendMessage(result);
                 animations.remove(playerId);
                 cancel();
             }
@@ -119,7 +125,6 @@ public final class WeatherRadioManager implements Listener {
         UUID playerId = event.getPlayer().getUniqueId();
         BukkitTask animation = animations.remove(playerId);
         if (animation != null) animation.cancel();
-        showingNextForecast.remove(playerId);
     }
 
     private String strip(String id) {

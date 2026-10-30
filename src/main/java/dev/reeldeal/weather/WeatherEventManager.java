@@ -9,6 +9,9 @@ import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.World;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
@@ -38,6 +41,7 @@ public final class WeatherEventManager {
             DUST_HAZE, FIREFLY_NIGHT, METEOR_DUST, SPORE_BLOOM, MAGNETIC_DISTURBANCE, FROSTWAKE);
 
     private final Plugin plugin;
+    private final BossBar weatherBossBar;
     private final Map<UUID, WeatherSnapshot> previousWeather = new HashMap<>();
     private final Set<UUID> warnedPlayers = new HashSet<>();
     private String activeEvent;
@@ -51,6 +55,7 @@ public final class WeatherEventManager {
 
     public WeatherEventManager(Plugin plugin) {
         this.plugin = plugin;
+        this.weatherBossBar = Bukkit.createBossBar("Weather", BarColor.PURPLE, BarStyle.SOLID);
         this.nextActivationCheckTick = Bukkit.getCurrentTick() + activationCheckIntervalTicks();
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 20L, 20L);
     }
@@ -62,6 +67,7 @@ public final class WeatherEventManager {
                 endEvent();
                 return;
             }
+            updateWeatherBossBar();
             if (ACID_RAIN.equals(activeEvent)) {
                 keepNormalRain();
             }
@@ -141,6 +147,7 @@ public final class WeatherEventManager {
         if (ACID_RAIN.equals(eventId)) {
             keepNormalRain();
         }
+        updateWeatherBossBar();
         plugin.getLogger().info("Global weather event started: " + displayName(eventId) + ".");
     }
 
@@ -149,6 +156,7 @@ public final class WeatherEventManager {
         if (ACID_RAIN.equals(ended)) {
             restoreWeather();
         }
+        weatherBossBar.removeAll();
         activeEvent = null;
         nextActivationCheckTick = Bukkit.getCurrentTick() + activationCheckIntervalTicks();
         plugin.getLogger().info("Global weather event ended: " + displayName(ended) + ".");
@@ -364,6 +372,43 @@ public final class WeatherEventManager {
         return next + " in about " + minutes + (minutes == 1 ? " minute" : " minutes");
     }
 
+    /** A short player-facing explanation of the active event's effect. */
+    public String currentWeatherPurpose(World world) {
+        if (activeEvent == null) {
+            return "Ordinary " + describeNormalWeather(world.hasStorm(), world.isThundering()).toLowerCase(java.util.Locale.ROOT)
+                    + "; no special event effect is active.";
+        }
+        return switch (activeEvent) {
+            case ACID_RAIN -> "Ordinary rain with occasional acidic hiss and droplets; fishing is unchanged.";
+            case POLLEN_DRIFT -> "Pollen drifts through the air; fishing may yield extra wheat seeds.";
+            case ASHFALL -> "Ash drifts down; fishing may yield charcoal.";
+            case COLD_SNAP -> "A sharp chill improves treasure odds and reduces junk catches.";
+            case DUST_HAZE -> "Dust sweeps through the air; fishing may yield clay.";
+            case FIREFLY_NIGHT -> "Glowing motes appear; fishing catches grant bonus experience.";
+            case METEOR_DUST -> "Distant meteor trails cross the sky; fishing may yield amethyst shards.";
+            case SPORE_BLOOM -> "Spores drift through the air; fishing may yield brown mushrooms.";
+            case MAGNETIC_DISTURBANCE -> "Static sparks flicker; fishing may yield iron nuggets and extra gold.";
+            case FROSTWAKE -> "The cold gathers active fishers and may awaken something beneath the water.";
+            default -> "An unusual weather pattern is affecting the world.";
+        };
+    }
+
+    private void updateWeatherBossBar() {
+        if (activeEvent == null) return;
+        weatherBossBar.setTitle("Weather | " + displayName(activeEvent));
+        double duration = Math.max(1.0, durationTicks(activeEvent));
+        double remaining = Math.max(0.0, eventEndsAtTick - Bukkit.getCurrentTick());
+        weatherBossBar.setProgress(clamp(remaining / duration, 0.0, 1.0));
+        Set<UUID> online = new HashSet<>();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            online.add(player.getUniqueId());
+            if (!weatherBossBar.getPlayers().contains(player)) weatherBossBar.addPlayer(player);
+        }
+        for (Player viewer : new ArrayList<>(weatherBossBar.getPlayers())) {
+            if (!online.contains(viewer.getUniqueId())) weatherBossBar.removePlayer(viewer);
+        }
+    }
+
     private String describeNormalWeather(boolean storming, boolean thundering) {
         if (thundering) return "Thunderstorm";
         return storming ? "Rain" : "Clear";
@@ -478,6 +523,7 @@ public final class WeatherEventManager {
         testCountdown = false;
         lastTestCountdownAnnouncement = -1;
         warnedPlayers.clear();
+        weatherBossBar.removeAll();
     }
 
     private record WeightedEvent(String id, double weight) { }

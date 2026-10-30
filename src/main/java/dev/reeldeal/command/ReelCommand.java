@@ -9,6 +9,7 @@ import dev.reeldeal.fishing.BarrelCatchManager;
 import dev.reeldeal.fishing.HookedFishManager;
 import dev.reeldeal.weather.WeatherEventManager;
 import dev.reeldeal.weather.FrostwakeBossManager;
+import dev.reeldeal.quest.QuestManager;
 import io.papermc.paper.command.brigadier.BasicCommand;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import net.kyori.adventure.text.Component;
@@ -38,6 +39,7 @@ public final class ReelCommand implements BasicCommand {
     private final RodWorkbench workbench;
     private final WeatherEventManager weatherEvents;
     private final FrostwakeBossManager frostwakeBoss;
+    private final QuestManager quests;
 
     public ReelCommand(ItemRegistry items, FishingRodFactory rods, Runnable reloadAction, CatchRecords catchRecords,
                        HookedFishManager hookedFish, BarrelCatchManager barrels, RodWorkbench workbench) {
@@ -53,6 +55,12 @@ public final class ReelCommand implements BasicCommand {
     public ReelCommand(ItemRegistry items, FishingRodFactory rods, Runnable reloadAction, CatchRecords catchRecords,
                        HookedFishManager hookedFish, BarrelCatchManager barrels, RodWorkbench workbench,
                        WeatherEventManager weatherEvents, FrostwakeBossManager frostwakeBoss) {
+        this(items, rods, reloadAction, catchRecords, hookedFish, barrels, workbench, weatherEvents, frostwakeBoss, null);
+    }
+
+    public ReelCommand(ItemRegistry items, FishingRodFactory rods, Runnable reloadAction, CatchRecords catchRecords,
+                       HookedFishManager hookedFish, BarrelCatchManager barrels, RodWorkbench workbench,
+                       WeatherEventManager weatherEvents, FrostwakeBossManager frostwakeBoss, QuestManager quests) {
         this.items = items;
         this.rods = rods;
         this.reloadAction = reloadAction;
@@ -62,6 +70,7 @@ public final class ReelCommand implements BasicCommand {
         this.workbench = workbench;
         this.weatherEvents = weatherEvents;
         this.frostwakeBoss = frostwakeBoss;
+        this.quests = quests;
     }
 
     @Override
@@ -83,6 +92,7 @@ public final class ReelCommand implements BasicCommand {
                     sender.sendMessage(Component.text("Only players can open the rod workbench.", NamedTextColor.RED));
                 }
             }
+            case "quests", "quest" -> handleQuests(sender, args);
             case "test" -> {
                 if (requireAdmin(sender)) handleTest(sender, args);
             }
@@ -110,6 +120,25 @@ public final class ReelCommand implements BasicCommand {
         }
         sender.sendMessage(Component.text("You don't have permission to use that command.", NamedTextColor.RED));
         return false;
+    }
+
+    private void handleQuests(CommandSender sender, String[] args) {
+        if (quests == null) {
+            sender.sendMessage(Component.text("The quest system is unavailable.", NamedTextColor.RED));
+            return;
+        }
+        if (args.length == 2 && args[1].equalsIgnoreCase("npc")) {
+            if (!requireAdmin(sender)) return;
+            if (!(sender instanceof Player player)) {
+                sender.sendMessage(Component.text("Run this in-game where you want the quest NPC placed.",
+                        NamedTextColor.RED));
+                return;
+            }
+            quests.spawnNpc(player);
+            return;
+        }
+        sender.sendMessage(Component.text("Quests are only available by interacting with the quest NPC.",
+                NamedTextColor.YELLOW));
     }
 
     private void handleStats(CommandSender sender, String[] args) {
@@ -417,7 +446,7 @@ public final class ReelCommand implements BasicCommand {
                 + (after != before ? " (was " + before + ")" : "") + ". Recipes rebuilt.", NamedTextColor.GREEN));
         sender.sendMessage(Component.text(
                 "Note: the PyroFishingPro integration's enabled/chance settings and event listeners aren't "
-                        + "reloaded -- restart for changes to those.",
+                        + "reloaded -- restart for changes to those. quests.yml was reloaded.",
                 NamedTextColor.YELLOW));
     }
 
@@ -451,6 +480,10 @@ public final class ReelCommand implements BasicCommand {
         sender.sendMessage(Component.text("  /reel stats [player]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel leaderboard [largest|catches]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel workbench", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  Visit the Quest Keeper NPC to view and claim quests.", NamedTextColor.YELLOW));
+        if (sender.hasPermission(PERMISSION)) {
+            sender.sendMessage(Component.text("  /reel quests npc", NamedTextColor.YELLOW));
+        }
         sender.sendMessage(Component.text("  /reel test <fish|barrel>", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel test frostwake", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  /reel test frostwake stop", NamedTextColor.YELLOW));
@@ -473,10 +506,12 @@ public final class ReelCommand implements BasicCommand {
         }
         List<String> options = switch (args.length) {
             case 1 -> sender.hasPermission(PERMISSION)
-                    ? List.of("stats", "leaderboard", "workbench", "test", "give", "add", "reload")
+                    ? List.of("stats", "leaderboard", "workbench", "quests", "test", "give", "add", "reload")
                     : List.of("stats", "leaderboard", "workbench");
             case 2 -> args[0].equalsIgnoreCase("stats") ? onlinePlayerNames()
                     : args[0].equalsIgnoreCase("leaderboard") ? List.of("largest", "catches")
+                    : args[0].equalsIgnoreCase("quests") || args[0].equalsIgnoreCase("quest")
+                    ? sender.hasPermission(PERMISSION) ? List.of("npc") : List.of()
                     : !sender.hasPermission(PERMISSION) ? List.of()
                     : args[0].equalsIgnoreCase("test") ? List.of("fish", "barrel", "frostwake", "weather")
                     : args[0].equalsIgnoreCase("give") ? concat(items.ids(), List.of("rod"))

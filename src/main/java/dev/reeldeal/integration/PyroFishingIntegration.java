@@ -1,6 +1,7 @@
 package dev.reeldeal.integration;
 
 import dev.reeldeal.fishing.HookedFishManager;
+import dev.reeldeal.quest.QuestManager;
 import dev.reeldeal.item.FishingRodFactory;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -40,7 +41,7 @@ public final class PyroFishingIntegration implements Listener {
     };
 
     public static boolean tryRegister(Plugin plugin, FishingRodFactory rods, boolean enabled, double triggerChance,
-                                      boolean replaceCatch, boolean debug, HookedFishManager hooked) {
+                                      boolean replaceCatch, boolean debug, HookedFishManager hooked, QuestManager quests) {
         if (!enabled) {
             return false;
         }
@@ -62,7 +63,8 @@ public final class PyroFishingIntegration implements Listener {
             return false;
         }
 
-        PyroFishingIntegration integration = new PyroFishingIntegration(plugin, rods, triggerChance, replaceCatch, debug, hooked);
+        PyroFishingIntegration integration = new PyroFishingIntegration(plugin, rods, triggerChance, replaceCatch,
+                debug, hooked, quests);
         instance = integration;
         @SuppressWarnings("unchecked")
         Class<? extends Event> typedEventClass = (Class<? extends Event>) eventClass;
@@ -125,6 +127,7 @@ public final class PyroFishingIntegration implements Listener {
     private final Map<UUID, Long> lastBarrelCatch = new ConcurrentHashMap<>();
     private final Map<UUID, PendingReward> pendingRewards = new java.util.HashMap<>();
     private final HookedFishManager hooked;
+    private final QuestManager quests;
     private final Plugin plugin;
     private final FishingRodFactory rods;
     private final double triggerChance;
@@ -133,8 +136,9 @@ public final class PyroFishingIntegration implements Listener {
     private final Random random = new Random();
 
     private PyroFishingIntegration(Plugin plugin, FishingRodFactory rods, double triggerChance,
-                                   boolean replaceCatch, boolean debug, HookedFishManager hooked) {
+                                   boolean replaceCatch, boolean debug, HookedFishManager hooked, QuestManager quests) {
         this.hooked = hooked;
+        this.quests = quests;
         this.plugin = plugin;
         this.rods = rods;
         this.triggerChance = triggerChance;
@@ -155,18 +159,21 @@ public final class PyroFishingIntegration implements Listener {
             catchMarkers.put(playerId, catchMarker);
             Bukkit.getScheduler().runTaskLater(plugin, () -> catchMarkers.remove(playerId, catchMarker), 20L);
             ItemStack fish = pyroItem.clone();
+            Object pyroTier = null;
+            String tierKey = null;
+            try {
+                pyroTier = invoke(event, "getTier");
+                tierKey = tierKey(pyroTier);
+            } catch (ReflectiveOperationException missingTierMethod) {
+                log("PyroFishing catch event has no getTier() method; tier quest progress is unavailable.");
+            }
+            if (quests != null && tierKey != null) quests.recordPyroTierCatch(player, tierKey);
             ItemStack rod = player.getInventory().getItemInMainHand();
             boolean reelRod = rods.isConstructed(rod);
             boolean anchorHook = reelRod && "reel:anchor_hook".equals(rods.hookOf(rod));
             String hookId = reelRod ? strip(rods.hookOf(rod)) : null;
             if ("xp_hook".equals(hookId)
                     && plugin.getConfig().getBoolean("pyrofishing-integration.enabled", true)) {
-                Object pyroTier = null;
-                try {
-                    pyroTier = invoke(event, "getTier");
-                } catch (ReflectiveOperationException missingTierMethod) {
-                    log("PyroFishing catch event has no getTier() method; using the XP Hook base bonus.");
-                }
                 applyTierScaledXp(player, pyroTier);
             }
             String model = replaceCatch && hooked.enabled() ? hooked.modelFor(fish) : null;

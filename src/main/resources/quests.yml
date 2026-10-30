@@ -1,0 +1,919 @@
+# ReelDeal quest line
+# Add entries below and run /reel reload. Players access and claim quests only through the Quest Keeper NPC.
+# Objective types: catches, hook-catches, line-catches, hook-line-catches, biome-catches, item-catches,
+# mob-catches, open-water-catches, barrels-opened, hooked-fish, fish-size, pyro-tier, weather-catches,
+# catch-categories (fish, junk, treasure, mineral, sky, mob), frostwake-defeats, radio-checks,
+# workbench-upgrades.
+# Rewards support experience, vanilla materials, ReelDeal item IDs, and console commands.
+npc:
+  name: "Quest Keeper"
+  follow:
+    enabled: true
+    range: 32.0
+    head-rotation-speed: 30.0
+    max-head-pitch: 45.0
+    check-interval-ticks: 10
+
+quests:
+  first_cast:
+    enabled: true
+    name: "First Cast"
+    description: "Land 10 fishing catches."
+    objective:
+      type: catches
+      amount: 10
+    rewards:
+      experience: 25
+      items:
+        - material: COOKED_COD
+          amount: 3
+
+  woven_line:
+    enabled: true
+    name: "Thread the Needle"
+    description: "Use a Woven Line for 12 catches."
+    requires: [first_cast]
+    objective:
+      type: line-catches
+      line: "woven_line"
+      amount: 12
+    rewards:
+      experience: 40
+      items:
+        - item: reinforced_line
+          amount: 1
+
+  reinforced_line:
+    enabled: true
+    name: "Stronger Thread"
+    description: "Use a Reinforced Line for 12 catches."
+    requires: [first_cast]
+    objective:
+      type: line-catches
+      line: "reinforced_line"
+      amount: 12
+    rewards:
+      experience: 50
+      items:
+        - material: IRON_INGOT
+          amount: 4
+
+  fiber_line:
+    enabled: true
+    name: "Fiber Specialist"
+    description: "Use a Fiber Line for 12 catches."
+    requires: [first_cast]
+    objective:
+      type: line-catches
+      line: "fiber_line"
+      amount: 12
+    rewards:
+      experience: 60
+      items:
+        - item: fiber_line
+          amount: 1
+
+  workbench_hand:
+    enabled: true
+    name: "Workbench Hand"
+    description: "Upgrade or modify a rod at the Rod Workbench 3 times."
+    requires: [first_cast]
+    objective:
+      type: workbench-upgrades
+      amount: 3
+    rewards:
+      experience: 50
+      items:
+        - material: IRON_NUGGET
+          amount: 16
+
+  iron_hook:
+    enabled: true
+    name: "Iron Points"
+    description: "Fish with an Iron Hook 12 times."
+    requires: [first_cast]
+    objective:
+      type: hook-catches
+      hook: "iron_hook"
+      amount: 12
+    rewards:
+      experience: 40
+      items:
+        - material: IRON_INGOT
+          amount: 3
+
+  wooden_hook:
+    enabled: true
+    name: "Junk Drawer"
+    description: "Fish with a Wooden Hook 8 times."
+    requires: [first_cast]
+    objective:
+      type: hook-catches
+      hook: "wooden_hook"
+      amount: 8
+    rewards:
+      experience: 35
+      items:
+        - material: OAK_PLANKS
+          amount: 12
+
+  golden_hook:
+    enabled: true
+    name: "Golden Opportunities"
+    description: "Fish with a Golden Hook 8 times."
+    requires: [first_cast]
+    objective:
+      type: hook-catches
+      hook: "golden_hook"
+      amount: 8
+    rewards:
+      experience: 60
+      items:
+        - material: GOLD_INGOT
+          amount: 3
+
+  barrel_opener:
+    enabled: true
+    name: "Barrel Opener"
+    description: "Open 2 fishing barrels."
+    requires: [first_cast]
+    objective:
+      type: barrels-opened
+      amount: 2
+    rewards:
+      experience: 50
+      items:
+        - material: PRISMARINE_SHARD
+          amount: 6
+
+  barrel_veteran:
+    enabled: true
+    name: "Barrel Veteran"
+    description: "Open 6 more fishing barrels."
+    requires: [barrel_opener]
+    objective:
+      type: barrels-opened
+      amount: 6
+    rewards:
+      experience: 80
+      items:
+        - material: NAUTILUS_SHELL
+          amount: 1
+
+  cluster_route:
+    enabled: true
+    name: "Below the Surface"
+    description: "Fish with a Cluster Hook 10 times."
+    requires: [barrel_veteran]
+    objective:
+      type: hook-catches
+      hook: "cluster_hook"
+      amount: 10
+    rewards:
+      experience: 75
+      items:
+        - item: cluster_hook
+          amount: 1
+
+  deepfish:
+    enabled: true
+    name: "Deepwater Record"
+    description: "Catch 3 Deepfish with a Fiber Line."
+    requires: [cluster_route]
+    objective:
+      type: item-catches
+      item: "deepfish"
+      line: "fiber_line"
+      amount: 3
+    rewards:
+      experience: 70
+      items:
+        - material: LAPIS_LAZULI
+          amount: 8
+
+  cobblefish:
+    enabled: true
+    name: "Stonewater Record"
+    description: "Catch 3 Cobblefish with a Fiber Line."
+    requires: [cluster_route]
+    objective:
+      type: item-catches
+      item: "cobblefish"
+      line: "fiber_line"
+      amount: 3
+    rewards:
+      experience: 70
+      items:
+        - material: COBBLED_DEEPSLATE
+          amount: 16
+
+  copper_seam:
+    enabled: true
+    name: "Copper Seam"
+    description: "Pull up 8 Raw Copper with a Cluster Hook."
+    requires: [cluster_route]
+    objective:
+      type: item-catches
+      item: "raw_copper"
+      hook: "cluster_hook"
+      amount: 8
+    rewards:
+      experience: 65
+      items:
+        - material: COPPER_INGOT
+          amount: 8
+
+  iron_seam:
+    enabled: true
+    name: "Iron Seam"
+    description: "Pull up 5 Raw Iron with a Cluster Hook."
+    requires: [cluster_route]
+    objective:
+      type: item-catches
+      item: "raw_iron"
+      hook: "cluster_hook"
+      amount: 5
+    rewards:
+      experience: 80
+      items:
+        - material: IRON_INGOT
+          amount: 5
+
+  golden_book:
+    enabled: true
+    name: "A Golden Page"
+    description: "Fish up 2 enchanted books with a Golden Hook."
+    requires: [cluster_route]
+    objective:
+      type: item-catches
+      item: "enchanted_book"
+      hook: "golden_hook"
+      amount: 2
+    rewards:
+      experience: 100
+      items:
+        - material: LAPIS_LAZULI
+          amount: 12
+
+  anchor_route:
+    enabled: true
+    name: "Hold Fast"
+    description: "Fish with an Anchor Hook 12 times."
+    requires: [cluster_route]
+    objective:
+      type: hook-catches
+      hook: "anchor_hook"
+      amount: 12
+    rewards:
+      experience: 90
+      items:
+        - item: anchor_hook
+          amount: 1
+
+  river_squid:
+    enabled: true
+    name: "River Haul"
+    description: "Pull up a Squid with an Anchor Hook."
+    requires: [anchor_route]
+    objective:
+      type: mob-catches
+      mob: "squid"
+      hook: "anchor_hook"
+      amount: 1
+    rewards:
+      experience: 75
+      items:
+        - material: GLOW_INK_SAC
+          amount: 3
+
+  ocean_dolphin:
+    enabled: true
+    name: "Ocean Haul"
+    description: "Pull up a Dolphin with an Anchor Hook."
+    requires: [anchor_route]
+    objective:
+      type: mob-catches
+      mob: "dolphin"
+      hook: "anchor_hook"
+      amount: 1
+    rewards:
+      experience: 100
+      items:
+        - material: COD
+          amount: 8
+
+  glow_below:
+    enabled: true
+    name: "Glow Below"
+    description: "Pull up a Glow Squid with an Anchor Hook."
+    requires: [anchor_route]
+    objective:
+      type: mob-catches
+      mob: "glow_squid"
+      hook: "anchor_hook"
+      amount: 1
+    rewards:
+      experience: 90
+      items:
+        - material: GLOW_INK_SAC
+          amount: 6
+
+  swamp_frog:
+    enabled: true
+    name: "Swamp Courier"
+    description: "Pull up a Frog with an Anchor Hook."
+    requires: [anchor_route]
+    objective:
+      type: mob-catches
+      mob: "frog"
+      hook: "anchor_hook"
+      amount: 1
+    rewards:
+      experience: 80
+      items:
+        - material: SLIME_BALL
+          amount: 4
+
+  sky_route:
+    enabled: true
+    name: "High-Flying Tackle"
+    description: "Fish with a Sky Hook 10 times."
+    requires: [anchor_route]
+    objective:
+      type: hook-catches
+      hook: "skyhook"
+      amount: 10
+    rewards:
+      experience: 90
+      items:
+        - item: skyhook
+          amount: 1
+
+  featherfall:
+    enabled: true
+    name: "Featherfall"
+    description: "Catch 16 Feathers with a Sky Hook."
+    requires: [sky_route]
+    objective:
+      type: item-catches
+      item: "feather"
+      hook: "skyhook"
+      amount: 16
+    rewards:
+      experience: 70
+      items:
+        - material: PHANTOM_MEMBRANE
+          amount: 3
+
+  windcatcher:
+    enabled: true
+    name: "Windcatcher"
+    description: "Catch 4 Wind Charges with a Sky Hook."
+    requires: [sky_route]
+    objective:
+      type: item-catches
+      item: "wind_charge"
+      hook: "skyhook"
+      amount: 4
+    rewards:
+      experience: 90
+      items:
+        - material: BREEZE_ROD
+          amount: 2
+
+  xp_angler:
+    enabled: true
+    name: "Experience Pays"
+    description: "Fish with an XP Hook 10 times."
+    requires: [sky_route]
+    objective:
+      type: hook-catches
+      hook: "xp_hook"
+      amount: 10
+    rewards:
+      experience: 90
+      items:
+        - item: xp_hook
+          amount: 1
+
+  open_water:
+    enabled: true
+    name: "Open Water"
+    description: "Make 25 ReelDeal catches in open water."
+    requires: [first_cast]
+    objective:
+      type: open-water-catches
+      amount: 25
+    rewards:
+      experience: 100
+      items:
+        - material: NAUTILUS_SHELL
+          amount: 1
+
+  cod_model:
+    enabled: true
+    name: "A Living Catch"
+    description: "Land 2 PyroFishing fish as 3D fish models."
+    requires: [sky_route]
+    objective:
+      type: hooked-fish
+      amount: 2
+    rewards:
+      experience: 100
+      items:
+        - material: GOLDEN_CARROT
+          amount: 4
+
+  tiny_fry:
+    enabled: true
+    name: "Tiny Fry"
+    description: "Catch 4 Tiny 3D fish."
+    requires: [cod_model]
+    objective:
+      type: fish-size
+      tier: "tiny"
+      amount: 4
+    rewards:
+      experience: 70
+      items:
+        - material: COD
+          amount: 8
+
+  small_catch:
+    enabled: true
+    name: "Small Catch"
+    description: "Catch 4 Small 3D fish."
+    requires: [cod_model]
+    objective:
+      type: fish-size
+      tier: "small"
+      amount: 4
+    rewards:
+      experience: 70
+      items:
+        - material: SALMON
+          amount: 8
+
+  medium_catch:
+    enabled: true
+    name: "A Good Measure"
+    description: "Catch 4 Medium 3D fish."
+    requires: [cod_model]
+    objective:
+      type: fish-size
+      tier: "medium"
+      amount: 4
+    rewards:
+      experience: 80
+      items:
+        - material: COOKED_SALMON
+          amount: 6
+
+  large_catch:
+    enabled: true
+    name: "Big One"
+    description: "Catch 3 Large 3D fish."
+    requires: [cod_model]
+    objective:
+      type: fish-size
+      tier: "large"
+      amount: 3
+    rewards:
+      experience: 100
+      items:
+        - material: GOLD_INGOT
+          amount: 2
+
+  trophy_catch:
+    enabled: true
+    name: "Trophy Water"
+    description: "Catch a Trophy-sized 3D fish."
+    requires: [cod_model]
+    objective:
+      type: fish-size
+      tier: "trophy"
+      amount: 1
+    rewards:
+      experience: 150
+      items:
+        - material: DIAMOND
+          amount: 1
+
+  bronze_regular:
+    enabled: true
+    name: "Bronze Regular"
+    description: "Catch 8 Bronze-tier PyroFishing fish."
+    requires: [cod_model]
+    objective:
+      type: pyro-tier
+      tier: "bronze"
+      amount: 8
+    rewards:
+      experience: 80
+      items:
+        - material: IRON_INGOT
+          amount: 6
+
+  silver_run:
+    enabled: true
+    name: "Silver Run"
+    description: "Catch 5 Silver-tier PyroFishing fish."
+    requires: [bronze_regular]
+    objective:
+      type: pyro-tier
+      tier: "silver"
+      amount: 5
+    rewards:
+      experience: 100
+      items:
+        - material: GOLD_INGOT
+          amount: 2
+
+  gold_run:
+    enabled: true
+    name: "Gold Standard"
+    description: "Catch 3 Gold-tier PyroFishing fish."
+    requires: [bronze_regular]
+    objective:
+      type: pyro-tier
+      tier: "gold"
+      amount: 3
+    rewards:
+      experience: 125
+      items:
+        - material: DIAMOND
+          amount: 1
+
+  diamond_run:
+    enabled: true
+    name: "Diamond Current"
+    description: "Catch 2 Diamond-tier PyroFishing fish."
+    requires: [bronze_regular]
+    objective:
+      type: pyro-tier
+      tier: "diamond"
+      amount: 2
+    rewards:
+      experience: 150
+      items:
+        - material: DIAMOND
+          amount: 2
+
+  platinum_run:
+    enabled: true
+    name: "Platinum Tide"
+    description: "Catch a Platinum-tier PyroFishing fish."
+    requires: [bronze_regular]
+    objective:
+      type: pyro-tier
+      tier: "platinum"
+      amount: 1
+    rewards:
+      experience: 200
+      items:
+        - material: EMERALD
+          amount: 3
+
+  mythical_run:
+    enabled: true
+    name: "Mythical Waters"
+    description: "Catch a Mythical-tier PyroFishing fish."
+    requires: [bronze_regular]
+    objective:
+      type: pyro-tier
+      tier: "mythical"
+      amount: 1
+    rewards:
+      experience: 300
+      items:
+        - material: HEART_OF_THE_SEA
+          amount: 1
+
+  bullfish_record:
+    enabled: true
+    name: "Marsh Bull"
+    description: "Catch 2 Bullfish."
+    requires: [cluster_route]
+    objective:
+      type: item-catches
+      item: "bullfish"
+      amount: 2
+    rewards:
+      experience: 80
+      items:
+        - material: HONEY_BOTTLE
+          amount: 2
+
+  fishroom_record:
+    enabled: true
+    name: "Forest Floor"
+    description: "Catch 2 Fishroom."
+    requires: [cluster_route]
+    objective:
+      type: item-catches
+      item: "fishroom"
+      amount: 2
+    rewards:
+      experience: 80
+      items:
+        - material: GLOW_BERRIES
+          amount: 8
+
+  icehorn_record:
+    enabled: true
+    name: "Cold Current"
+    description: "Catch 2 Icehorn."
+    requires: [cluster_route]
+    objective:
+      type: item-catches
+      item: "icehorn"
+      amount: 2
+    rewards:
+      experience: 90
+      items:
+        - material: PACKED_ICE
+          amount: 8
+
+  acid_rain:
+    enabled: true
+    name: "Acid Rain Log"
+    description: "Land 5 catches during Acid Rain."
+    requires: [bronze_regular]
+    objective:
+      type: weather-catches
+      weather: "acid-rain"
+      amount: 5
+    rewards:
+      experience: 100
+      items:
+        - material: COPPER_INGOT
+          amount: 6
+
+  pollen_drift:
+    enabled: true
+    name: "Pollen Drift Log"
+    description: "Land 5 catches during Pollen Drift."
+    requires: [acid_rain]
+    objective:
+      type: weather-catches
+      weather: "pollen-drift"
+      amount: 5
+    rewards:
+      experience: 100
+      items:
+        - material: WHEAT_SEEDS
+          amount: 16
+
+  ashfall:
+    enabled: true
+    name: "Ashfall Log"
+    description: "Land 5 catches during Ashfall."
+    requires: [acid_rain]
+    objective:
+      type: weather-catches
+      weather: "ashfall"
+      amount: 5
+    rewards:
+      experience: 110
+      items:
+        - material: CHARCOAL
+          amount: 8
+
+  cold_snap:
+    enabled: true
+    name: "Cold Snap Log"
+    description: "Land 5 catches during Cold Snap."
+    requires: [acid_rain]
+    objective:
+      type: weather-catches
+      weather: "cold-snap"
+      amount: 5
+    rewards:
+      experience: 110
+      items:
+        - material: SNOW_BLOCK
+          amount: 8
+
+  frostwake_weather:
+    enabled: true
+    name: "Frostwake Log"
+    description: "Land 5 catches during Frostwake."
+    requires: [acid_rain]
+    objective:
+      type: weather-catches
+      weather: "frostwake"
+      amount: 5
+    rewards:
+      experience: 120
+      items:
+        - material: BLUE_ICE
+          amount: 4
+
+  dust_haze:
+    enabled: true
+    name: "Dust Haze Log"
+    description: "Land 5 catches during Dust Haze."
+    requires: [acid_rain]
+    objective:
+      type: weather-catches
+      weather: "dust-haze"
+      amount: 5
+    rewards:
+      experience: 100
+      items:
+        - material: CLAY_BALL
+          amount: 8
+
+  firefly_night:
+    enabled: true
+    name: "Firefly Night Log"
+    description: "Land 5 catches during Firefly Night."
+    requires: [acid_rain]
+    objective:
+      type: weather-catches
+      weather: "firefly-night"
+      amount: 5
+    rewards:
+      experience: 110
+      items:
+        - material: GLOW_INK_SAC
+          amount: 4
+
+  meteor_dust:
+    enabled: true
+    name: "Meteor Dust Log"
+    description: "Land 5 catches during Meteor Dust."
+    requires: [acid_rain]
+    objective:
+      type: weather-catches
+      weather: "meteor-dust"
+      amount: 5
+    rewards:
+      experience: 125
+      items:
+        - material: AMETHYST_SHARD
+          amount: 8
+
+  spore_bloom:
+    enabled: true
+    name: "Spore Bloom Log"
+    description: "Land 5 catches during Spore Bloom."
+    requires: [acid_rain]
+    objective:
+      type: weather-catches
+      weather: "spore-bloom"
+      amount: 5
+    rewards:
+      experience: 110
+      items:
+        - material: BROWN_MUSHROOM
+          amount: 8
+
+  magnetic_disturbance:
+    enabled: true
+    name: "Magnetic Disturbance Log"
+    description: "Land 5 catches during Magnetic Disturbance."
+    requires: [acid_rain]
+    objective:
+      type: weather-catches
+      weather: "magnetic-disturbance"
+      amount: 5
+    rewards:
+      experience: 125
+      items:
+        - material: IRON_NUGGET
+          amount: 16
+
+  frostwake_hunter:
+    enabled: true
+    name: "Frostwake Hunter"
+    description: "Help defeat a Frostwake Illusioner."
+    requires: [frostwake_weather]
+    objective:
+      type: frostwake-defeats
+      amount: 1
+    rewards:
+      experience: 200
+      items:
+        - material: PRISMARINE_CRYSTALS
+          amount: 12
+
+  radio_operator:
+    enabled: true
+    name: "Radio Operator"
+    description: "Check the Weather Radio 5 times."
+    requires: [acid_rain]
+    objective:
+      type: radio-checks
+      amount: 5
+    rewards:
+      experience: 90
+      items:
+        - material: REDSTONE
+          amount: 8
+
+  biome_roamer:
+    enabled: true
+    name: "Biome Roamer"
+    description: "Fish in Snowy Plains 5 times."
+    requires: [icehorn_record]
+    objective:
+      type: biome-catches
+      biome: "snowy_plains"
+      amount: 5
+    rewards:
+      experience: 100
+      items:
+        - material: COMPASS
+          amount: 1
+
+  workbench_master:
+    enabled: true
+    name: "Bench Tuner"
+    description: "Upgrade a ReelDeal rod at the Workbench 8 times."
+    requires: [workbench_hand]
+    objective:
+      type: workbench-upgrades
+      amount: 8
+    rewards:
+      experience: 150
+      items:
+        - material: ANVIL
+          amount: 1
+
+  anchor_fiber_combo:
+    enabled: true
+    name: "Fiber on the Anchor"
+    description: "Make 10 catches with an Anchor Hook and Fiber Line together."
+    requires: [anchor_route]
+    objective:
+      type: hook-line-catches
+      combination: "anchor_hook:fiber_line"
+      amount: 10
+    rewards:
+      experience: 120
+      items:
+        - material: PRISMARINE_CRYSTALS
+          amount: 8
+
+  junk_salvager:
+    enabled: true
+    name: "Junk Salvager"
+    description: "Bring in 20 junk catches with a ReelDeal rod."
+    requires: [first_cast]
+    objective:
+      type: catch-categories
+      category: "junk"
+      amount: 20
+    rewards:
+      experience: 70
+      items:
+        - material: IRON_NUGGET
+          amount: 12
+
+  treasure_diver:
+    enabled: true
+    name: "Treasure Diver"
+    description: "Land 5 treasure catches with a ReelDeal rod in open water."
+    requires: [open_water]
+    objective:
+      type: catch-categories
+      category: "treasure"
+      amount: 5
+    rewards:
+      experience: 125
+      items:
+        - material: EMERALD
+          amount: 2
+
+  mineral_prospector:
+    enabled: true
+    name: "Mineral Prospector"
+    description: "Pull up 10 mineral catches with a Cluster Hook."
+    requires: [cluster_route]
+    objective:
+      type: catch-categories
+      category: "mineral"
+      hook: "cluster_hook"
+      amount: 10
+    rewards:
+      experience: 100
+      items:
+        - material: RAW_GOLD
+          amount: 4
+
+  steady_fisher:
+    enabled: true
+    name: "Steady Fisher"
+    description: "Land 25 fish-category catches with a ReelDeal rod."
+    requires: [first_cast]
+    objective:
+      type: catch-categories
+      category: "fish"
+      amount: 25
+    rewards:
+      experience: 90
+      items:
+        - material: COOKED_COD
+          amount: 8
+

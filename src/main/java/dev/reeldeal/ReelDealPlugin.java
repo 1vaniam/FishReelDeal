@@ -15,6 +15,7 @@ import dev.reeldeal.recipe.RecipeRegistrar;
 import dev.reeldeal.weather.WeatherEventManager;
 import dev.reeldeal.weather.FrostwakeBossManager;
 import dev.reeldeal.weather.WeatherRadioManager;
+import dev.reeldeal.quest.QuestManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ public final class ReelDealPlugin extends JavaPlugin {
     private DisplayFollowTicker displayTicker;
     private WeatherEventManager weatherEvents;
     private FrostwakeBossManager frostwakeBoss;
+    private QuestManager questManager;
 
     @Override
     public void onEnable() {
@@ -45,22 +47,26 @@ public final class ReelDealPlugin extends JavaPlugin {
         this.itemRegistry = new ItemRegistry(this);
         this.rodFactory = new FishingRodFactory(this, itemRegistry);
         this.catchRecords = new CatchRecords(this);
-        RodWorkbench workbench = new RodWorkbench(itemRegistry, rodFactory);
+        this.questManager = new QuestManager(this, itemRegistry);
+        getServer().getPluginManager().registerEvents(questManager, this);
+        questManager.scanLoadedQuestNpcs();
+        RodWorkbench workbench = new RodWorkbench(itemRegistry, rodFactory, questManager);
         reload();
 
-        this.frostwakeBoss = new FrostwakeBossManager(this, weatherEvents, itemRegistry);
+        this.frostwakeBoss = new FrostwakeBossManager(this, weatherEvents, itemRegistry, questManager);
         getServer().getPluginManager().registerEvents(frostwakeBoss, this);
 
         getServer().getPluginManager().registerEvents(new ReelItemGuard(itemRegistry), this);
-        getServer().getPluginManager().registerEvents(new WeatherRadioManager(this, itemRegistry, weatherEvents), this);
+        getServer().getPluginManager().registerEvents(
+                new WeatherRadioManager(this, itemRegistry, weatherEvents, questManager), this);
         getServer().getPluginManager().registerEvents(workbench, this);
         this.displayTicker = new DisplayFollowTicker(this);
-        this.barrelCatches = new BarrelCatchManager(this, displayTicker, itemRegistry);
+        this.barrelCatches = new BarrelCatchManager(this, displayTicker, itemRegistry, questManager);
         getServer().getPluginManager().registerEvents(barrelCatches, this);
         getServer().getPluginManager().registerEvents(
-                new FishingLootResolver(this, itemRegistry, rodFactory, barrelCatches, weatherEvents), this);
+                new FishingLootResolver(this, itemRegistry, rodFactory, barrelCatches, weatherEvents, questManager), this);
 
-        this.hookedFish = new HookedFishManager(this, displayTicker, catchRecords);
+        this.hookedFish = new HookedFishManager(this, displayTicker, catchRecords, questManager);
         getServer().getPluginManager().registerEvents(hookedFish, this);
 
         boolean pyroEnabled = getConfig().getBoolean("pyrofishing-integration.enabled", true);
@@ -70,10 +76,11 @@ public final class ReelDealPlugin extends JavaPlugin {
                 ? getConfig().getBoolean(replaceModelsPath)
                 : getConfig().getBoolean("pyrofishing-integration.replace-catch-on-anchor-hook", true);
         boolean pyroDebug = getConfig().getBoolean("pyrofishing-integration.debug", false);
-        PyroFishingIntegration.tryRegister(this, rodFactory, pyroEnabled, pyroChance, pyroReplace, pyroDebug, hookedFish);
+        PyroFishingIntegration.tryRegister(this, rodFactory, pyroEnabled, pyroChance, pyroReplace, pyroDebug,
+                hookedFish, questManager);
 
         ReelCommand reelCommand = new ReelCommand(itemRegistry, rodFactory, this::reload, catchRecords,
-                hookedFish, barrelCatches, workbench, weatherEvents, frostwakeBoss);
+                hookedFish, barrelCatches, workbench, weatherEvents, frostwakeBoss, questManager);
         registerCommand("reel", "ReelDeal admin/debug commands", java.util.List.of(), reelCommand);
         getServer().getScheduler().runTaskTimer(this, catchRecords::saveAsync, 1200L, 1200L);
 
@@ -95,6 +102,10 @@ public final class ReelDealPlugin extends JavaPlugin {
         if (catchRecords != null) {
             catchRecords.saveNow();
         }
+        if (questManager != null) {
+            questManager.saveNow();
+            questManager.stopNpcTasks();
+        }
         if (barrelCatches != null) {
             barrelCatches.clear();
         }
@@ -110,6 +121,7 @@ public final class ReelDealPlugin extends JavaPlugin {
         reloadConfig();
         mergeConfigDefaults();
         itemRegistry.load();
+        if (questManager != null) questManager.reload();
         if (hookedFish != null) {
             hookedFish.reload();
         }

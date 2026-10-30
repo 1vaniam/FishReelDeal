@@ -1,6 +1,7 @@
 package dev.reeldeal.item;
 
 import dev.reeldeal.ReelKeys;
+import dev.reeldeal.quest.QuestManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -38,10 +39,12 @@ public final class RodWorkbench implements Listener {
 
     private final ItemRegistry items;
     private final FishingRodFactory rods;
+    private final QuestManager quests;
 
-    public RodWorkbench(ItemRegistry items, FishingRodFactory rods) {
+    public RodWorkbench(ItemRegistry items, FishingRodFactory rods, QuestManager quests) {
         this.items = items;
         this.rods = rods;
+        this.quests = quests;
     }
 
     public void open(Player player) {
@@ -188,6 +191,7 @@ public final class RodWorkbench implements Listener {
         }
         updatePreview(inventory);
         tell(player, "Rod updated. Enchantments and durability were retained.", NamedTextColor.GREEN);
+        if (quests != null) quests.recordWorkbenchUpgrade(player);
     }
 
     private static final String INVALID = "\u0000";

@@ -25,6 +25,7 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import dev.reeldeal.item.ItemRegistry;
+import dev.reeldeal.quest.QuestManager;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -44,6 +45,7 @@ public final class BarrelCatchManager implements Listener {
     private final Plugin plugin;
     private final ItemRegistry items;
     private final DisplayFollowTicker displayTicker;
+    private final QuestManager quests;
     private final Map<UUID, ActiveBarrel> active = new HashMap<>();
     private final Random lootRandom = new Random();
     private final Random encounterRandom = new Random();
@@ -66,10 +68,11 @@ public final class BarrelCatchManager implements Listener {
         }
     }
 
-    public BarrelCatchManager(Plugin plugin, DisplayFollowTicker displayTicker, ItemRegistry items) {
+    public BarrelCatchManager(Plugin plugin, DisplayFollowTicker displayTicker, ItemRegistry items, QuestManager quests) {
         this.plugin = plugin;
         this.displayTicker = displayTicker;
         this.items = items;
+        this.quests = quests;
     }
 
     public boolean shouldCatch(String hookId, Random random) {
@@ -220,6 +223,7 @@ public final class BarrelCatchManager implements Listener {
         }
         dropAt.getWorld().playSound(dropAt, Sound.BLOCK_BARREL_OPEN, 1.0f, 1.0f);
         player.sendActionBar(Component.text("The barrel opened!", NamedTextColor.GREEN));
+        if (quests != null) quests.recordBarrelOpened(player);
     }
 
     @EventHandler
